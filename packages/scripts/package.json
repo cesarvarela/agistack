@@ -6,9 +6,10 @@
 	"scripts": {
 	},
 	"dependencies": {
-		"@agistack/node-services": "workspace:*",
 		"@agistack/control-plane-api": "workspace:*",
+		"@agistack/db": "workspace:*",
 		"@agistack/node-api": "workspace:*",
+		"@agistack/node-services": "workspace:*",
 		"@trpc/client": "^11.7.1",
 		"graphql-ws": "^6.0.6",
 		"ws": "^8.18.3"

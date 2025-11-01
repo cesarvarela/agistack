@@ -1,8 +1,7 @@
-import type { NewNode, Node } from "@agistack/db"
-import { nodes } from "@agistack/db"
+import { type NewDBNode, type DBNode, nodes } from "@agistack/db"
 import { nanoid } from "nanoid"
 import { z } from "zod"
-import { Action } from "./BaseAction"
+import type { Action, ActionDependencies } from "../types"
 
 export const inputSchema = z.object({
 	name: z.string().describe("Display name for the node"),
@@ -22,25 +21,25 @@ export const outputSchema = z.object({
 type InputSchema = z.infer<typeof inputSchema>
 type OutputSchema = z.infer<typeof outputSchema>
 
-export class AddNodeAction extends Action<InputSchema, OutputSchema> {
-	static readonly metadata = {
+export const addNode: Action<InputSchema, OutputSchema> = {
+	metadata: {
 		name: "addNode" as const,
 		description: "Add a new node to the system for managing containers and infrastructure.",
 		inputSchema,
 		outputSchema,
-	}
+	},
 
-	async execute(input: InputSchema): Promise<OutputSchema> {
-		const newNode: NewNode = {
+	execute: async (deps: ActionDependencies, input: InputSchema): Promise<OutputSchema> => {
+		const newNode: NewDBNode = {
 			id: nanoid(),
 			name: input.name,
 			url: input.url,
 		}
 
-		const insertedNode = this.db.insert(nodes).values(newNode).returning().get() as Node
+		const insertedNode = deps.db.insert(nodes).values(newNode).returning().get() as DBNode
 
 		return {
 			node: insertedNode,
 		}
-	}
+	},
 }

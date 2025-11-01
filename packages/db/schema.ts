@@ -50,8 +50,8 @@ export const containersRelations = relations(containers, ({ one }) => ({ node: o
 export const conversationsRelations = relations(conversations, ({ many }) => ({ messages: many(messages) }))
 export const messagesRelations = relations(messages, ({ one }) => ({ conversation: one(conversations, { fields: [messages.conversationId], references: [conversations.id] }) }))
 
-export type Node = typeof nodes.$inferSelect
-export type NewNode = typeof nodes.$inferInsert
+export type DBNode = typeof nodes.$inferSelect
+export type NewDBNode = typeof nodes.$inferInsert
 export type Container = typeof containers.$inferSelect
 export type NewContainer = typeof containers.$inferInsert
 export type Conversation = typeof conversations.$inferSelect

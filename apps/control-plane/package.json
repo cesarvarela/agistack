@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run server.ts",
-    "start": "bun run server.ts"
+    "dev": "pnpm --watch index.ts",
+    "start": "pnpm run index.ts"
   },
   "dependencies": {
     "@agistack/control-plane-api": "workspace:*",
-    "hono": "^4.10.3"
+    "@agistack/db": "workspace:*",
+    "@agistack/control-plane-services": "workspace:*"
   }
 }

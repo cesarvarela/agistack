@@ -1,10 +1,12 @@
-import { Database } from "bun:sqlite"
-import { dirname, isAbsolute, join } from "node:path"
+import Database from "better-sqlite3"
 import { mkdir } from "node:fs/promises"
-import { drizzle } from "drizzle-orm/bun-sqlite"
-import { migrate } from "drizzle-orm/bun-sqlite/migrator"
+import { dirname, isAbsolute, join } from "node:path"
+import { fileURLToPath } from "node:url"
+import { drizzle } from "drizzle-orm/better-sqlite3"
+import { migrate } from "drizzle-orm/better-sqlite3/migrator"
 
-const MIGRATIONS_FOLDER = join(import.meta.dir || __dirname, "migrations")
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const MIGRATIONS_FOLDER = join(__dirname, "migrations")
 
 export async function runMigrations(databasePath: string) {
   if (!isAbsolute(databasePath)) {

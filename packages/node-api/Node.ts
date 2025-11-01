@@ -63,6 +63,43 @@ export class Node {
 
 		return router
 	}
+
+	async stop() {
+		return new Promise<void>((resolve, reject) => {
+			// Close WebSocket server first
+			if (this.wss) {
+				this.wss.close((err) => {
+					if (err) {
+						reject(err)
+						return
+					}
+
+					// Then close HTTP server
+					if (this.httpServer) {
+						this.httpServer.close((err) => {
+							if (err) {
+								reject(err)
+								return
+							}
+							resolve()
+						})
+					} else {
+						resolve()
+					}
+				})
+			} else if (this.httpServer) {
+				this.httpServer.close((err) => {
+					if (err) {
+						reject(err)
+						return
+					}
+					resolve()
+				})
+			} else {
+				resolve()
+			}
+		})
+	}
 }
 
 export type AppRouter = ReturnType<Node["getRouter"]>

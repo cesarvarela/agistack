@@ -1,34 +1,47 @@
-import type { DatabaseClient, Node } from "@agistack/db"
+import type { DatabaseClient, DBNode } from "@agistack/db"
 import { eq, nodes } from "@agistack/db"
-import type { NodeApi } from "@agistack/node-api"
-import { treaty } from "@elysiajs/eden"
-
-/**
- * Type-safe HTTP client for calling operations on a remote node
- */
-export class NodeClient {
-	public readonly client: ReturnType<typeof treaty<NodeApi>>
-
-	constructor(node: Node) {
-		this.client = treaty<NodeApi>(node.url)
-	}
-}
+import { NodeClient } from "./NodeClient"
 
 /**
  * Registry for managing node connections
  */
 export class NodeRegistry {
+	private clientCache = new Map<string, NodeClient>()
+
 	constructor(private db: DatabaseClient) {}
 
-	getNode(nodeId: string): NodeClient {
-		// For now, we'll query synchronously when needed
-		// In production, you might want to cache this
-		const node = this.db.select().from(nodes).where(eq(nodes.id, nodeId)).get() as Node | undefined
+	/**
+	 * Get node database record by ID
+	 */
+	getNodeRecord(nodeId: string): DBNode {
+		const node = this.db.select().from(nodes).where(eq(nodes.id, nodeId)).get() as DBNode | undefined
 
 		if (!node) {
 			throw new Error(`Node not found: ${nodeId}`)
 		}
 
-		return new NodeClient(node)
+		return node
+	}
+
+	/**
+	 * Get or create a client connection to a node
+	 */
+	getClient(nodeId: string): NodeClient {
+		if (!this.clientCache.has(nodeId)) {
+			const node = this.getNodeRecord(nodeId)
+			this.clientCache.set(nodeId, new NodeClient(node.url))
+		}
+		return this.clientCache.get(nodeId)!
+	}
+
+	/**
+	 * Remove a node and clean up its client connection
+	 */
+	removeNode(nodeId: string): void {
+		const client = this.clientCache.get(nodeId)
+		if (client) {
+			client.dispose()
+			this.clientCache.delete(nodeId)
+		}
 	}
 }
