@@ -1,0 +1,68 @@
+import {
+	inspectContainerOperation,
+	listContainersOperation,
+	pullImageOperation,
+	streamLogsOperation,
+} from "@agistack/node-services/operations"
+import { initTRPC } from "@trpc/server"
+import type { Server } from "node:http"
+import type { WebSocketServer } from "ws"
+import { createTRPCServerWithWebSocket, executeHttpOperation, executeStreamOperation } from "./helpers"
+
+const t = initTRPC.create()
+
+export class Node {
+	private httpServer: Server | null = null
+	private wss: WebSocketServer | null = null
+	private port: number
+
+	constructor(port = 4001) {
+		this.port = port
+	}
+
+	/**
+	 * Creates the tRPC router with all operations
+	 */
+	private getRouter() {
+		return t.router({
+			container: t.router({
+				list: t.procedure
+					.input(listContainersOperation.metadata.inputSchema)
+					.output(listContainersOperation.metadata.outputSchema)
+					.query(({ input }) => executeHttpOperation(listContainersOperation, input)),
+
+				inspect: t.procedure
+					.input(inspectContainerOperation.metadata.inputSchema)
+					.output(inspectContainerOperation.metadata.outputSchema)
+					.query(({ input }) => executeHttpOperation(inspectContainerOperation, input)),
+
+				streamLogs: t.procedure
+					.input(streamLogsOperation.metadata.inputSchema)
+					.subscription(({ input }) => executeStreamOperation(streamLogsOperation, input)),
+			}),
+
+			image: t.router({
+				pullImage: t.procedure
+					.input(pullImageOperation.metadata.inputSchema)
+					.subscription(({ input }) => executeStreamOperation(pullImageOperation, input)),
+			}),
+		})
+	}
+
+	async start() {
+		const router = this.getRouter()
+
+		const { httpServer, wss } = createTRPCServerWithWebSocket({
+			router,
+			port: this.port,
+			serverName: "Node tRPC server",
+		})
+
+		this.httpServer = httpServer
+		this.wss = wss
+
+		return router
+	}
+}
+
+export type AppRouter = ReturnType<Node["getRouter"]>

@@ -1,0 +1,37 @@
+{
+	"name": "agistack",
+	"version": "0.1.0",
+	"private": true,
+	"workspaces": [
+		"packages/*",
+		"apps/*"
+	],
+	"scripts": {
+    "dev": "bun --filter '@agistack/agent' --filter '@agistack/control-plane' --filter '@agistack/frontend' dev",
+    "dev:cp": "cd apps/control-plane && bun run dev",
+		"dev:agent": "cd apps/agent && bun run dev",
+		"dev:web": "cd apps/frontend && bun run dev",
+    "db:generate": "cd packages/control-plane-services && bun run db:generate",
+    "db:migrate": "cd packages/control-plane-services && bun run db:migrate",
+    "db:studio": "cd packages/control-plane-services && bun run db:studio",
+		"lint": "biome lint .",
+		"lint:fix": "biome lint --write .",
+		"format": "biome format --write .",
+		"format:check": "biome check --formatter .",
+		"check": "bun run --filter '*' check-types && bun run lint && bun run format:check",
+		"prepare": "husky",
+		"check-types": "tsc --noemit"
+	},
+	"lint-staged": {
+		"*.ts": [
+			"biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
+		]
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.2",
+		"@types/bun": "latest",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.2.6",
+		"typescript": "^5.3.0"
+	}
+}

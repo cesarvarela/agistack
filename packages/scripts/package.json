@@ -1,0 +1,20 @@
+{
+	"name": "@agistack/scripts",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+	},
+	"dependencies": {
+		"@agistack/node-services": "workspace:*",
+		"@agistack/control-plane-api": "workspace:*",
+		"@agistack/node-api": "workspace:*",
+		"@trpc/client": "^11.7.1",
+		"graphql-ws": "^6.0.6",
+		"ws": "^8.18.3"
+	},
+	"devDependencies": {
+		"@types/ws": "^8.18.1",
+		"typescript": "^5.3.0"
+	}
+}

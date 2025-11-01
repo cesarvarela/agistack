@@ -1,0 +1,21 @@
+{
+	"name": "@agistack/agent",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "pnpm --watch index.ts",
+		"start": "pnpm run index.ts",
+		"check-types": "tsc --noEmit",
+		"lint": "biome lint .",
+		"lint:fix": "biome lint --write .",
+		"format": "biome format --write .",
+		"format:check": "biome check --formatter ."
+	},
+	"dependencies": {
+		"@agistack/node-api": "workspace:*"
+	},
+	"devDependencies": {
+		"typescript": "^5.3.0"
+	}
+}
