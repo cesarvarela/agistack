@@ -1,143 +1,147 @@
-import { createTRPCClient, httpBatchLink } from "@trpc/client"
-import type { ControlPlaneRouter } from "@agistack/control-plane-api"
 import {
-	addNode,
-	deleteNode,
-	getNodeInfo,
-	listNodes,
-} from "@agistack/control-plane-services/actions"
+	addNodeMetadata,
+	deleteNodeMetadata,
+	getNodeInfoMetadata,
+	listNodesMetadata,
+} from "@agistack/tool-metadata/actions"
 import {
-	getContainerLogsOperation,
-	inspectContainerOperation,
-	listContainersOperation,
-	restartContainerOperation,
-	startContainerOperation,
-	stopContainerOperation,
-} from "@agistack/node-services/operations"
-import superjson from "superjson"
-import { z } from "zod"
+	getContainerLogsMetadata,
+	inspectContainerMetadata,
+	listContainersMetadata,
+	restartContainerMetadata,
+	startContainerMetadata,
+	stopContainerMetadata,
+} from "@agistack/tool-metadata/operations"
 import { tool } from "ai"
+import { z } from "zod"
 
 /**
- * Creates AI SDK tools from the Control Plane tRPC API.
+ * Tool executor interface - defines all operations that can be performed by AI tools.
+ * This allows tools to execute via tRPC mutations (client-side) or direct API calls (server-side).
+ */
+export type ToolExecutor = {
+	// Queries
+	listNodes: () => Promise<unknown>
+	getNodeInfo: (args: { nodeId: string }) => Promise<unknown>
+	listContainers: (args: { nodeId: string; status?: string }) => Promise<unknown>
+	inspectContainer: (args: { nodeId: string; dockerId: string }) => Promise<unknown>
+	getContainerLogs: (args: {
+		nodeId: string
+		containerId: string
+		lines?: number
+		since?: string
+	}) => Promise<unknown>
+
+	// Mutations
+	addNode: (args: { name: string; url: string }) => Promise<unknown>
+	deleteNode: (args: { id: string }) => Promise<unknown>
+	startContainer: (args: { nodeId: string; dockerId: string }) => Promise<unknown>
+	stopContainer: (args: { nodeId: string; dockerId: string; timeout?: number }) => Promise<unknown>
+	restartContainer: (args: {
+		nodeId: string
+		dockerId: string
+		timeout?: number
+	}) => Promise<unknown>
+}
+
+/**
+ * Creates AI SDK tools that use the provided executor to perform operations.
  * Split into queries (read-only) and mutations (write operations).
  */
-export function getAiTools() {
-	const controlPlaneUrl = process.env.NEXT_PUBLIC_CP_URL || "http://localhost:4002"
-
-	// Create server-side tRPC client
-	const client = createTRPCClient<ControlPlaneRouter>({
-		links: [
-			httpBatchLink({
-				url: controlPlaneUrl,
-				transformer: superjson,
-			}),
-		],
-	})
-
+export function getAiTools(executor: ToolExecutor) {
 	// Query tools (read-only operations)
 	const queries = {
 		listNodes: tool({
-			description: listNodes.metadata.description,
-			inputSchema: listNodes.metadata.inputSchema,
-			execute: async (args) => {
-				return await client.actions.listNodes.query(args)
-			},
+			description: listNodesMetadata.description,
+			inputSchema: listNodesMetadata.inputSchema,
+			execute: async () => executor.listNodes(),
 		}),
 
 		getNodeInfo: tool({
-			description: getNodeInfo.metadata.description,
-			inputSchema: getNodeInfo.metadata.inputSchema,
-			execute: async ({ nodeId }) => {
-				return await client.actions.getNodeInfo.query({ nodeId })
-			},
+			description: getNodeInfoMetadata.description,
+			inputSchema: getNodeInfoMetadata.inputSchema,
+			execute: async ({ nodeId }) => executor.getNodeInfo({ nodeId }),
 		}),
 
 		listContainers: tool({
-			description: listContainersOperation.metadata.description,
+			description: listContainersMetadata.description,
 			inputSchema: z.intersection(
-				listContainersOperation.metadata.inputSchema,
+				listContainersMetadata.inputSchema,
 				z.object({ nodeId: z.string().describe("The ID of the node to query containers from") }),
 			),
-			execute: async (args) => {
-				return await client.proxy.container.list.query(args)
-			},
+			execute: async (args) => executor.listContainers(args),
 		}),
 
 		inspectContainer: tool({
-			description: inspectContainerOperation.metadata.description,
+			description: inspectContainerMetadata.description,
 			inputSchema: z.intersection(
-				inspectContainerOperation.metadata.inputSchema,
-				z.object({ nodeId: z.string().describe("The ID of the node where the container is running") }),
+				inspectContainerMetadata.inputSchema,
+				z.object({
+					nodeId: z.string().describe("The ID of the node where the container is running"),
+				}),
 			),
-			execute: async (args) => {
-				return await client.proxy.container.inspect.query(args)
-			},
+			execute: async (args) => executor.inspectContainer(args),
 		}),
 
 		getContainerLogs: tool({
-			description: getContainerLogsOperation.metadata.description,
+			description: getContainerLogsMetadata.description,
 			inputSchema: z.intersection(
-				getContainerLogsOperation.metadata.inputSchema,
-				z.object({ nodeId: z.string().describe("The ID of the node where the container is running") }),
+				getContainerLogsMetadata.inputSchema,
+				z.object({
+					nodeId: z.string().describe("The ID of the node where the container is running"),
+				}),
 			),
-			execute: async (args) => {
-				return await client.proxy.container.logs.query(args)
-			},
+			execute: async (args) => executor.getContainerLogs(args),
 		}),
 	}
 
 	// Mutation tools (write operations)
 	const mutations = {
 		addNode: tool({
-			description: addNode.metadata.description,
-			inputSchema: addNode.metadata.inputSchema,
-			execute: async ({ name, url }) => {
-				return await client.actions.addNode.mutate({ name, url })
-			},
+			description: addNodeMetadata.description,
+			inputSchema: addNodeMetadata.inputSchema,
+			execute: async ({ name, url }) => executor.addNode({ name, url }),
 		}),
 
 		deleteNode: tool({
-			description: deleteNode.metadata.description,
-			inputSchema: deleteNode.metadata.inputSchema,
-			execute: async ({ nodeId }) => {
-				return await client.actions.deleteNode.mutate({ nodeId })
-			},
+			description: deleteNodeMetadata.description,
+			inputSchema: deleteNodeMetadata.inputSchema,
+			execute: async ({ id }) => executor.deleteNode({ id }),
 		}),
 
 		startContainer: tool({
-			description: startContainerOperation.metadata.description,
+			description: startContainerMetadata.description,
 			inputSchema: z.intersection(
-				startContainerOperation.metadata.inputSchema,
-				z.object({ nodeId: z.string().describe("The ID of the node where the container is running") }),
+				startContainerMetadata.inputSchema,
+				z.object({
+					nodeId: z.string().describe("The ID of the node where the container is running"),
+				}),
 			),
-			execute: async (args) => {
-				return await client.proxy.container.start.mutate(args)
-			},
+			execute: async (args) => executor.startContainer(args),
 		}),
 
 		stopContainer: tool({
-			description: stopContainerOperation.metadata.description,
+			description: stopContainerMetadata.description,
 			inputSchema: z.intersection(
-				stopContainerOperation.metadata.inputSchema,
-				z.object({ nodeId: z.string().describe("The ID of the node where the container is running") }),
+				stopContainerMetadata.inputSchema,
+				z.object({
+					nodeId: z.string().describe("The ID of the node where the container is running"),
+				}),
 			),
-			execute: async (args) => {
-				return await client.proxy.container.stop.mutate(args)
-			},
+			execute: async (args) => executor.stopContainer(args),
 		}),
 
 		restartContainer: tool({
-			description: restartContainerOperation.metadata.description,
+			description: restartContainerMetadata.description,
 			inputSchema: z.intersection(
-				restartContainerOperation.metadata.inputSchema,
-				z.object({ nodeId: z.string().describe("The ID of the node where the container is running") }),
+				restartContainerMetadata.inputSchema,
+				z.object({
+					nodeId: z.string().describe("The ID of the node where the container is running"),
+				}),
 			),
-			execute: async (args) => {
-				return await client.proxy.container.restart.mutate(args)
-			},
+			execute: async (args) => executor.restartContainer(args),
 		}),
 	}
 
-	return { queries, mutations }
+	return { ...queries, ...mutations }
 }

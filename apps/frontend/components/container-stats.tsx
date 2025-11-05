@@ -5,11 +5,11 @@
  * Real-time stats viewer using tRPC WebSocket subscriptions
  */
 
-import { useState } from "react"
 import type { OperationEvent } from "@agistack/node-services/operations"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { trpc } from "@/lib/trpc"
 import { useStatsHistory } from "@/hooks/use-stats-history"
+import { trpc } from "@/lib/trpc"
 import { ContainerStatsChart } from "./container-stats-chart"
 
 interface ContainerStatsProps {

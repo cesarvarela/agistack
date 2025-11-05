@@ -4,10 +4,13 @@
  * Flow: User → AI → Control Plane Tools → Node → Docker
  */
 
+import type { ControlPlaneRouter } from "@agistack/control-plane-api"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
+import { createTRPCClient, httpBatchLink } from "@trpc/client"
+import { convertToModelMessages, stepCountIs, streamText } from "ai"
+import superjson from "superjson"
+import { getAiTools, type ToolExecutor } from "@/lib/ai-tools"
 import { systemPrompt } from "./system-prompt"
-import { getAiTools } from "@/lib/ai-tools"
-import { streamText, convertToModelMessages, stepCountIs } from "ai"
 
 // Initialize OpenRouter provider
 const openrouter = createOpenRouter({
@@ -18,11 +21,37 @@ export async function POST(req: Request) {
 	try {
 		const { messages } = await req.json()
 
-		// Get AI tools (queries and mutations)
-		const { queries, mutations } = getAiTools()
+		const controlPlaneUrl = process.env.NEXT_PUBLIC_CP_URL || "http://localhost:4002"
 
-		// Merge all tools for now (YOLO mode toggle can be added later)
-		const tools = { ...queries, ...mutations }
+		// Create server-side tRPC client for tool execution
+		const client = createTRPCClient<ControlPlaneRouter>({
+			links: [
+				httpBatchLink({
+					url: controlPlaneUrl,
+					transformer: superjson,
+				}),
+			],
+		})
+
+		// Create executor that uses the tRPC client
+		const executor: ToolExecutor = {
+			// Queries
+			listNodes: async () => client.actions.listNodes.query({}),
+			getNodeInfo: async ({ nodeId }) => client.actions.getNodeInfo.query({ nodeId }),
+			listContainers: async (args) => client.proxy.container.list.query(args),
+			inspectContainer: async (args) => client.proxy.container.inspect.query(args),
+			getContainerLogs: async (args) => client.proxy.container.logs.query(args),
+
+			// Mutations
+			addNode: async ({ name, url }) => client.actions.addNode.mutate({ name, url }),
+			deleteNode: async ({ id }) => client.actions.deleteNode.mutate({ id }),
+			startContainer: async (args) => client.proxy.container.start.mutate(args),
+			stopContainer: async (args) => client.proxy.container.stop.mutate(args),
+			restartContainer: async (args) => client.proxy.container.restart.mutate(args),
+		}
+
+		// Get AI tools with the executor
+		const tools = getAiTools(executor)
 
 		const result = streamText({
 			model: openrouter("anthropic/claude-3.5-sonnet"),

@@ -1,34 +1,10 @@
-import { z } from "zod"
-import type { StreamOperation } from "../types"
+import { streamLogsMetadata } from "@agistack/tool-metadata/operations"
+import { defineStreamOperation } from "../types"
 import { createPtyStream } from "../utils/ptyOperation"
 
-const inputSchema = z.object({
-	dockerId: z.string().describe("Docker container ID or name"),
-	tail: z.coerce
-		.number()
-		.optional()
-		.default(100)
-		.describe("Number of log lines to show from the end"),
-	follow: z.coerce.boolean().optional().default(true).describe("Follow log output"),
-})
-
-const outputSchema = z.object({
-	output: z.string().describe("Raw terminal output with ANSI escape codes"),
-})
-
-type InputSchema = z.infer<typeof inputSchema>
-type OutputSchema = z.infer<typeof outputSchema>
-
-export const streamLogsOperation: StreamOperation<InputSchema, OutputSchema> = {
-	metadata: {
-		name: "container.streamLogs" as const,
-		description: "Stream logs from a Docker container with terminal formatting and colors",
-		inputSchema,
-		outputSchema,
-		cancellable: true,
-	},
-
-	stream: createPtyStream((input: InputSchema) => {
+export const streamLogsOperation = defineStreamOperation(
+	streamLogsMetadata,
+	createPtyStream((input) => {
 		const args = ["logs"]
 
 		if (input.tail) {
@@ -43,4 +19,4 @@ export const streamLogsOperation: StreamOperation<InputSchema, OutputSchema> = {
 
 		return { command: "docker", args }
 	}),
-}
+)

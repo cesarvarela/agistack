@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useRef } from "react"
 import {
 	createChart,
-	LineSeries,
 	type IChartApi,
 	type ISeriesApi,
+	LineSeries,
 	type Time,
 } from "lightweight-charts"
+import { useEffect, useRef } from "react"
 
 interface DataSeries {
 	name: string
@@ -86,7 +86,10 @@ export function ContainerStatsChart({
 			chart.remove()
 			seriesRefs.current.clear()
 		}
-	}, [height, series.length]) // Recreate if number of series changes
+	}, [
+		height, // Create series for each data series
+		series.forEach,
+	]) // Recreate if number of series changes
 
 	// Update chart data
 	useEffect(() => {

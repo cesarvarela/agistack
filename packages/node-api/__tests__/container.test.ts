@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import { createTRPCClient, httpBatchLink } from "@trpc/client"
 import getPort from "get-port"
-import { Node } from "../Node"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import type { AppRouter } from "../Node"
+import { Node } from "../Node"
 
 describe("Node API - Container Operations", () => {
 	let node: Node
@@ -76,7 +76,7 @@ describe("Node API - Container Operations", () => {
 
 			// If there are containers, validate the structure
 			if (response.containers.length > 0) {
-				const container = response.containers[0]
+				const container = response.containers[0]!
 
 				expect(container).toHaveProperty("dockerId")
 				expect(typeof container.dockerId).toBe("string")

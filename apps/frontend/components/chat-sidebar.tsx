@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
-import { MessageList } from "./message-list"
 import { ChatInput } from "./chat-input"
+import { MessageList } from "./message-list"
+
 // import { api } from "@/lib/api-client"
 
 interface ChatSidebarProps {
@@ -68,6 +69,7 @@ export function ChatSidebar({ isOpen, onClose, variant = "overlay" }: ChatSideba
 			style={{ width: `${panelWidth}px`, minWidth: "300px", maxWidth: "600px" }}
 		>
 			{/* Resize handle */}
+			{/* biome-ignore lint/a11y/useSemanticElements: Interactive separator for resizing, role="separator" is correct */}
 			<div
 				role="separator"
 				aria-orientation="vertical"

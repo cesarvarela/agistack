@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { EnvironmentProvider } from "@/context/environment-context"
-import { EnvironmentSelector } from "@/components/environment-selector"
+import { useEffect, useState } from "react"
 import { AddServerButton } from "@/components/add-server-button"
+import { EnvironmentSelector } from "@/components/environment-selector"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { EnvironmentProvider } from "@/context/environment-context"
 import { ChatSidebar } from "./chat-sidebar"
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {

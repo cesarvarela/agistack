@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest"
+import { Node } from "@agistack/node-api"
 import { createTRPCClient, createWSClient, wsLink } from "@trpc/client"
 import getPort from "get-port"
 import superjson from "superjson"
-import { Node } from "@agistack/node-api"
-import { ControlPlane } from "../ControlPlane"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import type { ControlPlaneRouter } from "../ControlPlane"
+import { ControlPlane } from "../ControlPlane"
 import { setupTestDatabase, type TestDatabase } from "./utils"
 
 describe("Control Plane API - streamStats Subscription", () => {
@@ -95,7 +95,7 @@ describe("Control Plane API - streamStats Subscription", () => {
 			return
 		}
 
-		const testContainer = containers.containers[0]
+		const testContainer = containers.containers[0]!
 
 		// Subscribe to streamStats
 		const statsChunks: any[] = []

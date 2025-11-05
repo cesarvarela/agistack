@@ -1,31 +1,11 @@
-import { z } from "zod"
-import type { HttpOperation } from "../types"
+import { restartContainerMetadata } from "@agistack/tool-metadata/operations"
+import { defineHttpOperation, defineOperation } from "../types"
 import { createPtyExecute } from "../utils/ptyOperation"
 
-const inputSchema = z.object({
-	dockerId: z.string().describe("Docker container ID"),
-	timeout: z.number().optional().describe("Timeout in seconds before forcing kill"),
-})
-
-const outputSchema = z.object({
-	success: z.boolean(),
-	dockerId: z.string(),
-	message: z.string().optional(),
-})
-
-type InputSchema = z.infer<typeof inputSchema>
-type OutputSchema = z.infer<typeof outputSchema>
-
-export const restartContainerOperation: HttpOperation<InputSchema, OutputSchema> = {
-	metadata: {
-		name: "container.restart" as const,
-		description: "Restart a Docker container.",
-		inputSchema,
-		outputSchema,
-	},
-
-	execute: createPtyExecute(
-		(input: InputSchema) => ({
+export const restartContainerOperation = defineOperation(
+	restartContainerMetadata,
+	createPtyExecute(
+		(input) => ({
 			command: "docker",
 			args: [
 				"restart",
@@ -33,7 +13,7 @@ export const restartContainerOperation: HttpOperation<InputSchema, OutputSchema>
 				input.dockerId,
 			],
 		}),
-		(input: InputSchema, stdout: string) => {
+		(input, _stdout: string) => {
 			return {
 				success: true,
 				dockerId: input.dockerId,
@@ -41,4 +21,4 @@ export const restartContainerOperation: HttpOperation<InputSchema, OutputSchema>
 			}
 		},
 	),
-}
+)

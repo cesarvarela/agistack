@@ -1,7 +1,6 @@
-import { z } from "zod"
-import type { HttpOperation } from "../types"
+import { listContainersMetadata } from "@agistack/tool-metadata/operations"
+import { defineHttpOperation } from "../types"
 import { createPtyExecute } from "../utils/ptyOperation"
-import { containerListItemSchema } from "../../types"
 
 /**
  * Raw Docker container output from `docker ps --format json`
@@ -18,35 +17,14 @@ interface DockerContainerRaw {
 	Labels?: string
 }
 
-const inputSchema = z.object({
-	status: z
-		.enum(["running", "stopped", "all"])
-		.optional()
-		.describe('Filter by container status. Defaults to "all".'),
-})
-
-const outputSchema = z.object({
-	containers: z.array(containerListItemSchema),
-})
-
-type InputSchema = z.infer<typeof inputSchema>
-type OutputSchema = z.infer<typeof outputSchema>
-
-export const listContainersOperation: HttpOperation<InputSchema, OutputSchema> = {
-	metadata: {
-		name: "container.list" as const,
-		description:
-			"List all containers with their current state from Docker. Returns pure Docker data without metadata. Control plane enriches with metadata.",
-		inputSchema,
-		outputSchema,
-	},
-
-	execute: createPtyExecute(
-		(input: InputSchema) => ({
+export const listContainersOperation = defineHttpOperation(
+	listContainersMetadata,
+	createPtyExecute(
+		(_input) => ({
 			command: "docker",
 			args: ["ps", "-a", "--format", "{{json .}}"],
 		}),
-		(input: InputSchema, stdout: string) => {
+		(input, stdout: string) => {
 			const dockerContainers: DockerContainerRaw[] = stdout
 				.trim()
 				.split("\n")
@@ -85,8 +63,8 @@ export const listContainersOperation: HttpOperation<InputSchema, OutputSchema> =
 						if (match) {
 							portsArray.push({
 								PublicPort: match[1] ? Number.parseInt(match[1], 10) : undefined,
-								PrivatePort: Number.parseInt(match[2], 10),
-								Type: match[3],
+								PrivatePort: Number.parseInt(match[2]!, 10),
+								Type: match[3]!,
 							})
 						}
 					})
@@ -123,4 +101,4 @@ export const listContainersOperation: HttpOperation<InputSchema, OutputSchema> =
 			}
 		},
 	),
-}
+)

@@ -5,10 +5,10 @@
  * Interactive terminal using tRPC WebSocket subscriptions
  */
 
-import { useEffect, useRef, useState } from "react"
-import { Terminal } from "@xterm/xterm"
-import { FitAddon } from "@xterm/addon-fit"
 import { AttachAddon } from "@xterm/addon-attach"
+import { FitAddon } from "@xterm/addon-fit"
+import { Terminal } from "@xterm/xterm"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select } from "@/components/ui/select"

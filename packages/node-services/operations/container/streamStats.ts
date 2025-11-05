@@ -1,38 +1,15 @@
+import { streamStatsMetadata } from "@agistack/tool-metadata/operations"
 import stripAnsi from "strip-ansi"
-import { z } from "zod"
-import type { StreamOperation } from "../types"
+import type { z } from "zod"
+import { defineStreamOperation } from "../types"
 import { createPtyStream } from "../utils/ptyOperation"
-
-const inputSchema = z.object({
-	dockerId: z.string().describe("Docker container ID or name"),
-})
-
-const outputSchema = z.object({
-	cpu: z.number().describe("CPU usage percentage"),
-	memory: z.object({
-		usage: z.number().describe("Memory usage in bytes"),
-		limit: z.number().describe("Memory limit in bytes"),
-		percent: z.number().describe("Memory usage percentage"),
-	}),
-	network: z.object({
-		rx: z.number().describe("Network bytes received"),
-		tx: z.number().describe("Network bytes transmitted"),
-	}),
-	blockIO: z.object({
-		read: z.number().describe("Block I/O bytes read"),
-		write: z.number().describe("Block I/O bytes written"),
-	}),
-})
-
-type InputSchema = z.infer<typeof inputSchema>
-type OutputSchema = z.infer<typeof outputSchema>
 
 // Convert human-readable bytes (e.g., "100MiB", "2GiB") to numeric bytes
 function parseBytes(str: string): number {
 	const match = str.match(/^([\d.]+)\s*([A-Za-z]+)?$/)
 	if (!match) return 0
 
-	const value = parseFloat(match[1])
+	const value = parseFloat(match[1]!)
 	const unit = (match[2] || "B").toUpperCase()
 
 	const multipliers: Record<string, number> = {
@@ -51,7 +28,7 @@ function parseBytes(str: string): number {
 }
 
 // Parse Docker stats JSON format to our typed schema
-function parseDockerStats(data: any): OutputSchema {
+function parseDockerStats(data: any): z.infer<typeof streamStatsMetadata.outputSchema> {
 	// Parse CPU percentage (e.g., "0.50%" -> 0.5)
 	const cpu = data.CPUPerc ? parseFloat(data.CPUPerc.replace("%", "")) : 0
 
@@ -89,20 +66,13 @@ function parseDockerStats(data: any): OutputSchema {
 	}
 }
 
-export const streamStatsOperation: StreamOperation<InputSchema, OutputSchema> = {
-	metadata: {
-		name: "container.streamStats" as const,
-		description: "Stream real-time statistics from a Docker container",
-		inputSchema,
-		outputSchema,
-		cancellable: true,
-	},
-
-	stream: async function* (input: InputSchema, signal?: AbortSignal): AsyncGenerator<OutputSchema> {
+export const streamStatsOperation = defineStreamOperation(
+	streamStatsMetadata,
+	async function* (input, signal?) {
 		// Create the base PTY stream
-		const ptyStream = createPtyStream((inp: InputSchema) => ({
+		const ptyStream = createPtyStream(() => ({
 			command: "docker",
-			args: ["stats", "--no-stream=false", "--format", "json", inp.dockerId],
+			args: ["stats", "--no-stream=false", "--format", "json", input.dockerId],
 		}))
 
 		// Buffer to accumulate chunks until we have complete lines
@@ -148,4 +118,4 @@ export const streamStatsOperation: StreamOperation<InputSchema, OutputSchema> = 
 			}
 		}
 	},
-}
+)

@@ -1,7 +1,7 @@
-import { getDrizzle } from "@agistack/db"
-import { runMigrations } from "@agistack/db/migrate"
 import { unlink } from "node:fs/promises"
 import { resolve } from "node:path"
+import { getDrizzle } from "@agistack/db"
+import { runMigrations } from "@agistack/db/migrate"
 
 export interface TestDatabase {
 	db: ReturnType<typeof getDrizzle>

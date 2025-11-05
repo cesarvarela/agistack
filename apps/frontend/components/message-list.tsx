@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+
 // import { api } from "@/lib/api-client"
 
 interface MessageWithToolCalls {
@@ -33,21 +34,7 @@ export function MessageList({ conversationId, messages: externalMessages }: Mess
 		}
 	}, [externalMessages])
 
-	// Load conversation messages if conversationId is provided
-	useEffect(() => {
-		if (conversationId) {
-			loadMessages()
-		} else {
-			setMessages([])
-		}
-	}, [conversationId])
-
-	// Auto-scroll to bottom when messages change
-	useEffect(() => {
-		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-	}, [messages])
-
-	const loadMessages = async () => {
+	const loadMessages = useCallback(async () => {
 		if (!conversationId) return
 
 		try {
@@ -74,7 +61,21 @@ export function MessageList({ conversationId, messages: externalMessages }: Mess
 		} finally {
 			setLoading(false)
 		}
-	}
+	}, [conversationId])
+
+	// Load conversation messages if conversationId is provided
+	useEffect(() => {
+		if (conversationId) {
+			loadMessages()
+		} else {
+			setMessages([])
+		}
+	}, [conversationId, loadMessages])
+
+	// Auto-scroll to bottom when messages change
+	useEffect(() => {
+		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+	}, [])
 
 	if (loading) {
 		return (

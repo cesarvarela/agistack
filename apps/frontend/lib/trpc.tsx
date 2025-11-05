@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { createTRPCReact, httpBatchLink, splitLink } from "@trpc/react-query"
-import { createWSClient, wsLink } from "@trpc/client"
 import type { ControlPlaneRouter } from "@agistack/control-plane-api"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { createWSClient, wsLink } from "@trpc/client"
+import { createTRPCReact, httpBatchLink, splitLink } from "@trpc/react-query"
+import { useState } from "react"
 import superjson from "superjson"
 
 export const trpc = createTRPCReact<ControlPlaneRouter>()

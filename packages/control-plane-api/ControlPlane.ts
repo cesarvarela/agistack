@@ -1,9 +1,9 @@
 import type { Server } from "node:http"
 import {
 	addNode,
-	listNodes,
-	getNodeInfo,
 	deleteNode,
+	getNodeInfo,
+	listNodes,
 	NodeRegistry,
 } from "@agistack/control-plane-services"
 import type { DatabaseClient } from "@agistack/db"
@@ -19,9 +19,9 @@ import {
 	streamStatsOperation,
 } from "@agistack/node-services/operations"
 import { initTRPC } from "@trpc/server"
+import superjson from "superjson"
 import type { WebSocketServer } from "ws"
 import { z } from "zod"
-import superjson from "superjson"
 import { setupTerminalWebSocketProxy } from "./terminal-websocket-proxy"
 
 /**
@@ -114,14 +114,14 @@ export class ControlPlane {
 					.input(addNode.metadata.inputSchema)
 					.output(addNode.metadata.outputSchema)
 					.mutation(async ({ input }) => {
-						return await addNode.execute({ db: this.db, nodeRegistry: this.nodeRegistry }, input)
+						return await addNode.execute(input, { db: this.db, nodeRegistry: this.nodeRegistry })
 					}),
 
 				listNodes: t.procedure
 					.input(listNodes.metadata.inputSchema)
 					.output(listNodes.metadata.outputSchema)
 					.query(async ({ input }) => {
-						return await listNodes.execute({ db: this.db, nodeRegistry: this.nodeRegistry }, input)
+						return await listNodes.execute(input, { db: this.db, nodeRegistry: this.nodeRegistry }, )
 					}),
 
 				getNodeInfo: t.procedure
@@ -129,8 +129,8 @@ export class ControlPlane {
 					.output(getNodeInfo.metadata.outputSchema)
 					.query(async ({ input }) => {
 						return await getNodeInfo.execute(
-							{ db: this.db, nodeRegistry: this.nodeRegistry },
 							input,
+							{ db: this.db, nodeRegistry: this.nodeRegistry },
 						)
 					}),
 
@@ -138,7 +138,7 @@ export class ControlPlane {
 					.input(deleteNode.metadata.inputSchema)
 					.output(deleteNode.metadata.outputSchema)
 					.mutation(async ({ input }) => {
-						return await deleteNode.execute({ db: this.db, nodeRegistry: this.nodeRegistry }, input)
+						return await deleteNode.execute(input, { db: this.db, nodeRegistry: this.nodeRegistry })
 					}),
 			}),
 
@@ -155,7 +155,7 @@ export class ControlPlane {
 						)
 						.output(listContainersOperation.metadata.outputSchema)
 						.query(async ({ input }) => {
-							const { nodeId, ...nodeInput } = input as { nodeId: string; [key: string]: any }
+							const { nodeId, ...nodeInput } = input;
 							const nodeClient = this.nodeRegistry.getClient(nodeId)
 							return await nodeClient.client.container.list.query(nodeInput)
 						}),
@@ -169,7 +169,7 @@ export class ControlPlane {
 						)
 						.output(inspectContainerOperation.metadata.outputSchema)
 						.query(async ({ input }) => {
-							const { nodeId, ...nodeInput } = input as { nodeId: string; [key: string]: any }
+							const { nodeId, ...nodeInput } = input;
 							const nodeClient = this.nodeRegistry.getClient(nodeId)
 							return await nodeClient.client.container.inspect.query(nodeInput)
 						}),
@@ -183,7 +183,7 @@ export class ControlPlane {
 						)
 						.output(getContainerLogsOperation.metadata.outputSchema)
 						.query(async ({ input }) => {
-							const { nodeId, ...nodeInput } = input as { nodeId: string; [key: string]: any }
+							const { nodeId, ...nodeInput } = input;
 							const nodeClient = this.nodeRegistry.getClient(nodeId)
 							return await nodeClient.client.container.logs.query(nodeInput)
 						}),
@@ -197,7 +197,7 @@ export class ControlPlane {
 						)
 						.output(startContainerOperation.metadata.outputSchema)
 						.mutation(async ({ input }) => {
-							const { nodeId, ...nodeInput } = input as { nodeId: string; [key: string]: any }
+							const { nodeId, ...nodeInput } = input;
 							const nodeClient = this.nodeRegistry.getClient(nodeId)
 							return await nodeClient.client.container.start.mutate(nodeInput)
 						}),
@@ -211,7 +211,7 @@ export class ControlPlane {
 						)
 						.output(stopContainerOperation.metadata.outputSchema)
 						.mutation(async ({ input }) => {
-							const { nodeId, ...nodeInput } = input as { nodeId: string; [key: string]: any }
+							const { nodeId, ...nodeInput } = input;
 							const nodeClient = this.nodeRegistry.getClient(nodeId)
 							return await nodeClient.client.container.stop.mutate(nodeInput)
 						}),
@@ -225,7 +225,7 @@ export class ControlPlane {
 						)
 						.output(restartContainerOperation.metadata.outputSchema)
 						.mutation(async ({ input }) => {
-							const { nodeId, ...nodeInput } = input as { nodeId: string; [key: string]: any }
+							const { nodeId, ...nodeInput } = input;
 							const nodeClient = this.nodeRegistry.getClient(nodeId)
 							return await nodeClient.client.container.restart.mutate(nodeInput)
 						}),
@@ -239,7 +239,7 @@ export class ControlPlane {
 							),
 						)
 						.subscription(({ input }) => {
-							const { nodeId, ...nodeInput } = input as { nodeId: string; [key: string]: any }
+							const { nodeId, ...nodeInput } = input;
 							const nodeClient = this.nodeRegistry.getClient(nodeId)
 
 							return subscriptionToAsyncGenerator((callbacks) =>
@@ -255,7 +255,7 @@ export class ControlPlane {
 							),
 						)
 						.subscription(({ input }) => {
-							const { nodeId, ...nodeInput } = input as { nodeId: string; [key: string]: any }
+							const { nodeId, ...nodeInput } = input;
 							const nodeClient = this.nodeRegistry.getClient(nodeId)
 
 							return subscriptionToAsyncGenerator((callbacks) =>

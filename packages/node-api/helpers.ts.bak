@@ -173,19 +173,13 @@ export function setupTerminalWebSocket(wss: WebSocketServer) {
 		// WebSocket → PTY: Forward all input to PTY
 		ws.on("message", (data) => {
 			wsMessageCount++
-			// Convert RawData to Buffer to safely access .length and .toString()
-			const buffer = Buffer.isBuffer(data)
-				? data
-				: Array.isArray(data)
-					? Buffer.concat(data)
-					: Buffer.from(data)
-
 			console.log(
-				`[Terminal][${sessionId}] WS->PTY #${wsMessageCount}: ${buffer.length} bytes: ${JSON.stringify(buffer.toString().substring(0, 50))}`,
+				`[Terminal][${sessionId}] WS->PTY #${wsMessageCount}: ${Buffer.isBuffer(data) ? data.length : Array.isArray(data) ? Buffer.concat(data).length : Buffer.from(data).byteLength} bytes: ${JSON.stringify((Buffer.isBuffer(data) ? data : Array.isArray(data) ? Buffer.concat(data) : Buffer.from(data)).toString().substring(0, 50))}`,
 			)
 
 			try {
-				ptyProcess.write(buffer.toString())
+				const buffer = Buffer.isBuffer(data) ? data : Array.isArray(data) ? Buffer.concat(data) : Buffer.from(data)
+			ptyProcess.write(buffer.toString())
 			} catch (error) {
 				console.error(`[Terminal][${sessionId}] Error writing to PTY:`, error)
 			}

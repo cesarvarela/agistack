@@ -1,7 +1,7 @@
 "use client"
 
-import { trpc } from "@/lib/trpc"
 import type { ContainerListItem, ContainerPort } from "@agistack/node-services/types"
+import { trpc } from "@/lib/trpc"
 
 interface ContainersClientProps {
 	environment: string

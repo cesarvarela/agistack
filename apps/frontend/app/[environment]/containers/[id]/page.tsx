@@ -5,8 +5,8 @@
  * Shows container information with tabs for Overview, Logs, Stats, and Config
  */
 
-import { use } from "react"
 import { notFound } from "next/navigation"
+import { use } from "react"
 import { trpc } from "@/lib/trpc"
 import { ContainerDetailClient } from "./container-detail-client"
 

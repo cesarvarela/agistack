@@ -47,7 +47,9 @@ export function AddServerButton() {
 				</DialogHeader>
 				<form onSubmit={onSubmit} className="space-y-4">
 					<div>
-						<label htmlFor="node-name" className="block text-sm mb-1">Name</label>
+						<label htmlFor="node-name" className="block text-sm mb-1">
+							Name
+						</label>
 						<Input
 							id="node-name"
 							value={name}
@@ -57,7 +59,9 @@ export function AddServerButton() {
 						/>
 					</div>
 					<div>
-						<label htmlFor="node-url" className="block text-sm mb-1">Node URL</label>
+						<label htmlFor="node-url" className="block text-sm mb-1">
+							Node URL
+						</label>
 						<Input
 							id="node-url"
 							value={url}

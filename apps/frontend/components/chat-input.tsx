@@ -1,7 +1,7 @@
 "use client"
 
-import { useRef, useEffect, useState } from "react"
 import { useChat } from "@ai-sdk/react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 
@@ -15,7 +15,10 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 	const [text, setText] = useState("")
 	const [sending, setSending] = useState(false)
 
-	const { messages, sendMessage } = useChat()
+	const { messages, sendMessage } = useChat({
+		api: "/api/chat",
+		maxSteps: 3,
+	})
 
 	// Bubble messages up to parent for live display when no conversation selected
 	useEffect(() => {
@@ -25,17 +28,17 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 	}, [messages, onMessagesUpdate])
 
 	// Adjust textarea height
-	const adjustTextareaHeight = () => {
+	const adjustTextareaHeight = useCallback(() => {
 		const textarea = textareaRef.current
 		if (textarea) {
 			textarea.style.height = "auto"
 			textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`
 		}
-	}
+	}, [])
 
 	useEffect(() => {
 		adjustTextareaHeight()
-	}, [text])
+	}, [adjustTextareaHeight])
 
 	const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 		if (e.key === "Enter" && !e.shiftKey) {

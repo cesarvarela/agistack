@@ -8,19 +8,17 @@
 	],
 	"scripts": {
 		"dev": "pnpm --filter '@agistack/agent' --filter '@agistack/control-plane' --filter '@agistack/frontend' dev",
+		"test": "pnpm --filter '*' test",
 		"dev:cp": "cd apps/control-plane && pnpm run dev",
 		"dev:agent": "cd apps/agent && pnpm run dev",
 		"dev:web": "cd apps/frontend && pnpm run dev",
 		"db:generate": "cd packages/control-plane-services && pnpm run db:generate",
 		"db:migrate": "cd packages/control-plane-services && pnpm run db:migrate",
 		"db:studio": "cd packages/control-plane-services && pnpm run db:studio",
-		"lint": "biome lint .",
-		"lint:fix": "biome lint --write .",
-		"format": "biome format --write .",
-		"format:check": "biome check --formatter .",
-		"check": "pnpm run --filter '*' check-types && pnpm run lint && pnpm run format:check",
 		"prepare": "husky",
-		"check-types": "tsc --noemit"
+		"check": "biome lint .",
+		"check:fix": "biome lint --write .",
+		"check-types": "pnpm --filter '*' check-types"
 	},
 	"lint-staged": {
 		"*.ts": [
@@ -28,12 +26,15 @@
 		]
 	},
 	"devDependencies": {
+		"@agistack/typescript-config": "workspace:*",
 		"@biomejs/biome": "^2.3.2",
+		"@types/node": "^20.19.24",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.2.6",
 		"tsx": "^4.20.6",
-		"typescript": "^5.3.0"
+		"typescript": "^5.9.2"
 	},
+	"packageManager": "pnpm@9.0.0",
 	"dependencies": {
 		"@trpc/client": "^11.7.1",
 		"elysia": "^1.4.13",

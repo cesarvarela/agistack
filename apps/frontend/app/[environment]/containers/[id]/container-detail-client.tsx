@@ -5,15 +5,15 @@
  * Handles interactive features like tabs and action buttons
  */
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useIsMutating } from "@tanstack/react-query"
 import dynamic from "next/dynamic"
-import { useUrlState } from "@/hooks/use-url-state"
+import { useRouter } from "next/navigation"
+import { ContainerStats } from "@/components/container-stats"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ContainerStats } from "@/components/container-stats"
+import { useUrlState } from "@/hooks/use-url-state"
 import { trpc } from "@/lib/trpc"
 
 // Dynamic imports for xterm-dependent components to avoid SSR issues
@@ -35,15 +35,41 @@ interface ContainerDetailClientProps {
 
 export function ContainerDetailClient({ container, serverId }: ContainerDetailClientProps) {
 	const router = useRouter()
-	const [isLoading, setIsLoading] = useState<string | null>(null)
 	const [activeTab, setActiveTab] = useUrlState("tab", "overview")
+
+	// Track if mutations are running (from ANY source - UI buttons or AI chat)
+	const isStarting =
+		useIsMutating({
+			mutationKey: [["proxy", "container", "start"]],
+			predicate: (mutation) => {
+				const variables = mutation.state.variables as any
+				return variables?.nodeId === serverId && variables?.dockerId === container.dockerId
+			},
+		}) > 0
+
+	const isStopping =
+		useIsMutating({
+			mutationKey: [["proxy", "container", "stop"]],
+			predicate: (mutation) => {
+				const variables = mutation.state.variables as any
+				return variables?.nodeId === serverId && variables?.dockerId === container.dockerId
+			},
+		}) > 0
+
+	const isRestarting =
+		useIsMutating({
+			mutationKey: [["proxy", "container", "restart"]],
+			predicate: (mutation) => {
+				const variables = mutation.state.variables as any
+				return variables?.nodeId === serverId && variables?.dockerId === container.dockerId
+			},
+		}) > 0
 
 	const startMutation = trpc.proxy.container.start.useMutation()
 	const stopMutation = trpc.proxy.container.stop.useMutation()
 	const restartMutation = trpc.proxy.container.restart.useMutation()
 
 	const handleAction = async (action: "start" | "stop" | "restart") => {
-		setIsLoading(action)
 		try {
 			const input = {
 				nodeId: serverId,
@@ -63,12 +89,11 @@ export function ContainerDetailClient({ container, serverId }: ContainerDetailCl
 		} catch (error) {
 			alert(`Failed to ${action} container`)
 			console.error(error)
-		} finally {
-			setIsLoading(null)
 		}
 	}
 
 	const isRunning = container.state === "running"
+	const isAnyActionRunning = isStarting || isStopping || isRestarting
 
 	return (
 		<div className="p-8 space-y-6">
@@ -92,24 +117,24 @@ export function ContainerDetailClient({ container, serverId }: ContainerDetailCl
 			<div className="flex gap-2">
 				<Button
 					onClick={() => handleAction("start")}
-					disabled={isRunning || isLoading !== null}
+					disabled={isRunning || isAnyActionRunning}
 					variant="default"
 				>
-					{isLoading === "start" ? "Starting..." : "Start"}
+					{isStarting ? "Starting..." : "Start"}
 				</Button>
 				<Button
 					onClick={() => handleAction("stop")}
-					disabled={!isRunning || isLoading !== null}
+					disabled={!isRunning || isAnyActionRunning}
 					variant="destructive"
 				>
-					{isLoading === "stop" ? "Stopping..." : "Stop"}
+					{isStopping ? "Stopping..." : "Stop"}
 				</Button>
 				<Button
 					onClick={() => handleAction("restart")}
-					disabled={!isRunning || isLoading !== null}
+					disabled={!isRunning || isAnyActionRunning}
 					variant="outline"
 				>
-					{isLoading === "restart" ? "Restarting..." : "Restart"}
+					{isRestarting ? "Restarting..." : "Restart"}
 				</Button>
 			</div>
 
@@ -156,8 +181,11 @@ export function ContainerDetailClient({ container, serverId }: ContainerDetailCl
 								<div>
 									<p className="text-sm font-medium text-gray-500 mb-2">Ports</p>
 									<div className="space-y-1">
-										{container.ports.map((port: any, idx: number) => (
-											<p key={idx} className="text-sm font-mono">
+										{container.ports.map((port: any) => (
+											<p
+												key={`${port.PrivatePort}-${port.Type}-${port.PublicPort || "none"}`}
+												className="text-sm font-mono"
+											>
 												{port.PublicPort ? `${port.PublicPort}:` : ""}
 												{port.PrivatePort}/{port.Type}
 											</p>

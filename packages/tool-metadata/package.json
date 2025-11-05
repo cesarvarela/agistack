@@ -1,0 +1,16 @@
+{
+	"name": "@agistack/tool-metadata",
+	"version": "0.1.0",
+	"exports": {
+		".": "./index.ts",
+		"./operations": "./operations.ts",
+		"./actions": "./actions.ts"
+	},
+	"scripts": {
+		"check-types": "tsc --noEmit"
+	},
+	"dependencies": {
+		"zod": "^4.1.12",
+		"@agistack/typescript-config": "workspace:*"
+	}
+}

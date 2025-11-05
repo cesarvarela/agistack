@@ -1,7 +1,7 @@
+import { resolve } from "node:path"
 import { ControlPlane } from "@agistack/control-plane-api"
 import { getDrizzle } from "@agistack/db"
 import { runMigrations } from "@agistack/db/migrate"
-import { resolve } from "node:path"
 
 ;(async () => {
 	const databasePath = process.env.DATABASE_PATH || "./data/db.sqlite"

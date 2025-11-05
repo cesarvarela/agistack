@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import { trpc } from "@/lib/trpc"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { useEnvironment } from "@/context/environment-context"
+import { trpc } from "@/lib/trpc"
 
 interface ServerItem {
 	id: string

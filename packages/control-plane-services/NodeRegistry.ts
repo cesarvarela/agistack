@@ -1,6 +1,7 @@
 import type { DatabaseClient, DBNode } from "@agistack/db"
-import { eq, nodes } from "@agistack/db"
+import { nodes } from "@agistack/db"
 import { NodeClient } from "./NodeClient"
+import { eq } from "drizzle-orm";
 
 /**
  * Registry for managing node connections

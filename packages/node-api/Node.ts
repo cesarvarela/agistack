@@ -1,3 +1,4 @@
+import type { Server } from "node:http"
 import {
 	getContainerLogsOperation,
 	inspectContainerOperation,
@@ -10,7 +11,6 @@ import {
 	streamStatsOperation,
 } from "@agistack/node-services/operations"
 import { initTRPC } from "@trpc/server"
-import type { Server } from "node:http"
 import type { WebSocketServer } from "ws"
 import {
 	createTRPCServerWithWebSocket,
@@ -73,9 +73,6 @@ export class Node {
 				streamStats: t.procedure
 					.input(streamStatsOperation.metadata.inputSchema)
 					.subscription(({ input }) => executeStreamOperation(streamStatsOperation, input)),
-
-				// Terminal uses raw WebSocket at /terminal (not tRPC)
-				// See helpers.ts - createTRPCServerWithWebSocket
 			}),
 
 			image: t.router({

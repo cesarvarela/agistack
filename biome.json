@@ -17,7 +17,10 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true
+			"recommended": true,
+			"suspicious": {
+				"noUnknownAtRules": "off"
+			}
 		}
 	},
 	"javascript": {
@@ -33,6 +36,13 @@
 			"source": {
 				"organizeImports": "on"
 			}
+		}
+	},
+	"css": {
+		"parser": {
+			"cssModules": false,
+			"allowWrongLineComments": false,
+			"tailwindDirectives": true
 		}
 	}
 }

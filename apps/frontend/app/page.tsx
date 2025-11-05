@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { trpc } from "@/lib/trpc"
 import { useState } from "react"
+import { trpc } from "@/lib/trpc"
 
 export default function Home() {
 	const { data, isLoading } = trpc.actions.listNodes.useQuery({})

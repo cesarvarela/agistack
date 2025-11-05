@@ -1,6 +1,6 @@
-import { listContainersOperation } from "@agistack/node-services/operations"
+import { defineOperation, listContainersOperation } from "@agistack/node-services/operations"
 import { z } from "zod"
-import type { Action, ActionDependencies } from "../types"
+import type { ActionDependencies } from "../types"
 
 export const inputSchema = z.intersection(
 	listContainersOperation.metadata.inputSchema,
@@ -11,19 +11,17 @@ export const inputSchema = z.intersection(
 
 export const outputSchema = listContainersOperation.metadata.outputSchema
 
-type InputSchema = z.infer<typeof inputSchema>
-type OutputSchema = z.infer<typeof outputSchema>
-
-export const listServerContainers: Action<InputSchema, OutputSchema> = {
-	metadata: {
+export const listServerContainers = defineOperation<typeof inputSchema, typeof outputSchema, ActionDependencies>(
+	{
 		name: "listServerContainers" as const,
 		description:
 			"List all containers from a specific node/server. Delegates to the node's ListContainersOperation.",
 		inputSchema,
 		outputSchema,
 	},
+	async (input, deps) => {
+		if (!deps) throw new Error("Dependencies are required for this action")
 
-	execute: async (deps: ActionDependencies, input: InputSchema): Promise<OutputSchema> => {
 		const { nodeId, ...nodeInput } = input
 
 		// Get node client from registry
@@ -34,4 +32,4 @@ export const listServerContainers: Action<InputSchema, OutputSchema> = {
 
 		return result
 	},
-}
+)

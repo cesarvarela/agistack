@@ -16,4 +16,3 @@ export function getDrizzle(databasePath: string) {
 }
 
 export * from "./schema"
-export { eq, and, or, sql } from "drizzle-orm"

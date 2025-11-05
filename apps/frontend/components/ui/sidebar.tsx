@@ -1,9 +1,9 @@
 "use client"
 
-import type * as React from "react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { PanelRight } from "lucide-react"
+import type * as React from "react"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 export interface SidebarTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
 

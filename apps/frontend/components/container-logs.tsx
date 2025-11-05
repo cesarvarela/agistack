@@ -5,10 +5,10 @@
  * Real-time log viewer using tRPC WebSocket subscriptions
  */
 
-import { useEffect, useRef, useState } from "react"
-import { Terminal } from "@xterm/xterm"
-import { FitAddon } from "@xterm/addon-fit"
 import type { OperationEvent } from "@agistack/node-services/operations"
+import { FitAddon } from "@xterm/addon-fit"
+import { Terminal } from "@xterm/xterm"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { trpc } from "@/lib/trpc"

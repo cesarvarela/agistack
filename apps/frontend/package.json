@@ -17,6 +17,7 @@
 		"@agistack/control-plane-services": "workspace:*",
 		"@agistack/node-api": "workspace:*",
 		"@agistack/node-services": "workspace:*",
+		"@agistack/tool-metadata": "workspace:*",
 		"@ai-sdk/react": "^2.0.81",
 		"@openrouter/ai-sdk-provider": "^1.2.0",
 		"@radix-ui/react-dialog": "^1.1.15",
