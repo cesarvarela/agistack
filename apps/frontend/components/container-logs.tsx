@@ -83,7 +83,8 @@ export function ContainerLogs({ containerId, serverId }: ContainerLogsProps) {
 			follow: true,
 		},
 		{
-			onData: (event: OperationEvent<{ output: string }>) => {
+			onData: (data) => {
+				const event = data as OperationEvent<{ output: string }>
 				if (event.type === "started") {
 					setIsConnected(true)
 				} else if (event.type === "data") {

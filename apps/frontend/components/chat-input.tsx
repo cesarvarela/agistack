@@ -15,10 +15,7 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 	const [text, setText] = useState("")
 	const [sending, setSending] = useState(false)
 
-	const { messages, sendMessage } = useChat({
-		api: "/api/chat",
-		maxSteps: 3,
-	})
+	const { messages, sendMessage } = useChat()
 
 	// Bubble messages up to parent for live display when no conversation selected
 	useEffect(() => {

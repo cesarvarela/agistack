@@ -27,7 +27,9 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
 		}
 
 		const segments = pathname.split("/").filter(Boolean)
-		const environment = segments.length > 0 && segments[0] !== "api" ? segments[0] : null
+		const firstSegment = segments[0]
+		const environment: EnvId =
+			segments.length > 0 && firstSegment && firstSegment !== "api" ? firstSegment : null
 
 		setSelected(environment)
 		setReady(true)

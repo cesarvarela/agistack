@@ -23,7 +23,10 @@ export type ToolExecutor = {
 	// Queries
 	listNodes: () => Promise<unknown>
 	getNodeInfo: (args: { nodeId: string }) => Promise<unknown>
-	listContainers: (args: { nodeId: string; status?: string }) => Promise<unknown>
+	listContainers: (args: {
+		nodeId: string
+		status?: "all" | "running" | "stopped"
+	}) => Promise<unknown>
 	inspectContainer: (args: { nodeId: string; dockerId: string }) => Promise<unknown>
 	getContainerLogs: (args: {
 		nodeId: string

@@ -4,6 +4,8 @@ import type { ControlPlaneRouter } from "@agistack/control-plane-api"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { createWSClient, wsLink } from "@trpc/client"
 import { createTRPCReact, httpBatchLink, splitLink } from "@trpc/react-query"
+import type { getQueryKey } from '@trpc/react-query';
+
 import { useState } from "react"
 import superjson from "superjson"
 

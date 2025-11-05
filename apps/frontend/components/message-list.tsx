@@ -19,7 +19,7 @@ interface MessageWithToolCalls {
 
 interface MessageListProps {
 	conversationId: string | null
-	messages?: Message[]
+	messages?: MessageWithToolCalls[]
 }
 
 export function MessageList({ conversationId, messages: externalMessages }: MessageListProps) {
@@ -37,30 +37,31 @@ export function MessageList({ conversationId, messages: externalMessages }: Mess
 	const loadMessages = useCallback(async () => {
 		if (!conversationId) return
 
-		try {
-			setLoading(true)
-			const response = await api.conversations[":id"].$get({
-				param: { id: conversationId },
-			})
-			const data = await response.json()
+		// TODO: Implement conversation loading when api client is available
+		// try {
+		// 	setLoading(true)
+		// 	const response = await api.conversations[":id"].$get({
+		// 		param: { id: conversationId },
+		// 	})
+		// 	const data = await response.json()
 
-			if (response.ok && "conversation" in data) {
-				// Convert stored messages to UI format; DB stores string content
-				const convertedMessages =
-					data.conversation.messages?.map((msg: any) => ({
-						id: msg.id,
-						role: msg.role,
-						content: msg.content,
-						toolInvocations: msg.toolCalls ? JSON.parse(msg.toolCalls) : undefined,
-					})) || []
+		// 	if (response.ok && "conversation" in data) {
+		// 		// Convert stored messages to UI format; DB stores string content
+		// 		const convertedMessages =
+		// 			data.conversation.messages?.map((msg: any) => ({
+		// 				id: msg.id,
+		// 				role: msg.role,
+		// 				content: msg.content,
+		// 				toolInvocations: msg.toolCalls ? JSON.parse(msg.toolCalls) : undefined,
+		// 			})) || []
 
-				setMessages(convertedMessages)
-			}
-		} catch (error) {
-			console.error("Failed to load messages:", error)
-		} finally {
-			setLoading(false)
-		}
+		// 		setMessages(convertedMessages)
+		// 	}
+		// } catch (error) {
+		// 	console.error("Failed to load messages:", error)
+		// } finally {
+		// 	setLoading(false)
+		// }
 	}, [conversationId])
 
 	// Load conversation messages if conversationId is provided
@@ -175,14 +176,14 @@ export function MessageList({ conversationId, messages: externalMessages }: Mess
 													{JSON.stringify(tool.args, null, 2)}
 												</pre>
 											</div>
-											{tool.result && (
+											{tool.result ? (
 												<div>
 													<strong>Result:</strong>
 													<pre className="text-xs overflow-x-auto">
-														{JSON.stringify(tool.result, null, 2)}
+														{JSON.stringify(tool.result, null, 2) || ""}
 													</pre>
 												</div>
-											)}
+											) : null}
 										</div>
 									</details>
 								))}

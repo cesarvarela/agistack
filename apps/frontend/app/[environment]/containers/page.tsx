@@ -6,11 +6,11 @@
 import { ContainersClient } from "./containers-client"
 
 interface ContainersPageProps {
-	params: { environment: string }
+	params: Promise<{ environment: string }>
 }
 
 export default async function ContainersPage({ params }: ContainersPageProps) {
-	const { environment } = params
+	const { environment } = await params
 
 	return (
 		<div className="p-8">

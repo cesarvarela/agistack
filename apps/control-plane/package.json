@@ -2,12 +2,13 @@
 	"name": "@agistack/control-plane",
 	"version": "0.1.0",
 	"private": true,
-	"type": "module",
 	"scripts": {
 		"dev": "tsx --watch index.ts",
-		"start": "tsx index.ts"
+		"start": "tsx index.ts",
+		"check-types": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@agistack/typescript-config": "workspace:*",
 		"@agistack/control-plane-api": "workspace:*",
 		"@agistack/db": "workspace:*",
 		"@agistack/control-plane-services": "workspace:*"

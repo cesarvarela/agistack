@@ -1,6 +1,6 @@
 "use client"
 
-import type { ContainerListItem, ContainerPort } from "@agistack/node-services/types"
+import type { ContainerListItem, ContainerPort } from "@agistack/tool-metadata"
 import { trpc } from "@/lib/trpc"
 
 interface ContainersClientProps {
@@ -70,18 +70,11 @@ export function ContainersClient({ environment }: ContainersClientProps) {
 								className="hover:bg-gray-50 dark:hover:bg-gray-700"
 							>
 								<td className="px-4 py-3">
-									<div className="flex flex-col gap-1">
-										<div
-											className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate"
-											title={container.name || container.dockerId}
-										>
-											{container.name || container.dockerId.slice(0, 12)}
-										</div>
-										{container.managedByPlatform && (
-											<span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 w-fit">
-												Managed
-											</span>
-										)}
+									<div
+										className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate"
+										title={container.name || container.dockerId}
+									>
+										{container.name || container.dockerId.slice(0, 12)}
 									</div>
 								</td>
 								<td className="px-4 py-3">

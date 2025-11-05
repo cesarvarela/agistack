@@ -45,7 +45,8 @@ export function ContainerStats({ containerId, serverId }: ContainerStatsProps) {
 			dockerId: containerId,
 		},
 		{
-			onData: (event: OperationEvent<Stats>) => {
+			onData: (data) => {
+				const event = data as OperationEvent<Stats>
 				if (event.type === "started") {
 					setIsConnected(true)
 				} else if (event.type === "data") {

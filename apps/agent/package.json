@@ -2,7 +2,6 @@
 	"name": "@agistack/agent",
 	"version": "0.1.0",
 	"private": true,
-	"type": "module",
 	"scripts": {
 		"dev": "tsx --watch index.ts",
 		"start": "tsx index.ts",
@@ -16,6 +15,7 @@
 		"@agistack/node-api": "workspace:*"
 	},
 	"devDependencies": {
+		"@agistack/typescript-config": "workspace:*",
 		"typescript": "^5.3.0"
 	}
 }
