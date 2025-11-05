@@ -1,15 +1,15 @@
 {
-  "name": "@agistack/control-plane",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "pnpm --watch index.ts",
-    "start": "pnpm run index.ts"
-  },
-  "dependencies": {
-    "@agistack/control-plane-api": "workspace:*",
-    "@agistack/db": "workspace:*",
-    "@agistack/control-plane-services": "workspace:*"
-  }
+	"name": "@agistack/control-plane",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tsx --watch index.ts",
+		"start": "tsx index.ts"
+	},
+	"dependencies": {
+		"@agistack/control-plane-api": "workspace:*",
+		"@agistack/db": "workspace:*",
+		"@agistack/control-plane-services": "workspace:*"
+	}
 }

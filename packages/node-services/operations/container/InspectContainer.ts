@@ -1,6 +1,7 @@
 import { z } from "zod"
 import type { HttpOperation } from "../types"
 import { createPtyExecute } from "../utils/ptyOperation"
+import { dockerInspectSchema } from "../../types"
 
 const inputSchema = z.object({
 	dockerId: z.string().describe("Docker container ID"),
@@ -8,7 +9,7 @@ const inputSchema = z.object({
 
 const outputSchema = z.object({
 	dockerId: z.string(),
-	inspect: z.unknown(),
+	inspect: dockerInspectSchema,
 })
 
 type InputSchema = z.infer<typeof inputSchema>

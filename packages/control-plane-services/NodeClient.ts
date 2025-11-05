@@ -4,8 +4,10 @@ import { createTRPCProxyClient, createWSClient, wsLink } from "@trpc/client"
 export class NodeClient {
 	private trpcClient: ReturnType<typeof createTRPCProxyClient<AppRouter>>
 	private wsClient: ReturnType<typeof createWSClient>
+	public readonly url: string
 
 	constructor(nodeUrl: string) {
+		this.url = nodeUrl
 		this.wsClient = createWSClient({ url: nodeUrl })
 		this.trpcClient = createTRPCProxyClient<AppRouter>({
 			links: [wsLink({ client: this.wsClient })],

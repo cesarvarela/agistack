@@ -9,24 +9,23 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const MIGRATIONS_FOLDER = join(__dirname, "migrations")
 
 export async function runMigrations(databasePath: string) {
-  if (!isAbsolute(databasePath)) {
-    throw new Error(`Database path must be absolute. Got: ${databasePath}`)
-  }
+	if (!isAbsolute(databasePath)) {
+		throw new Error(`Database path must be absolute. Got: ${databasePath}`)
+	}
 
-  console.log("Running database migrations...")
-  console.log(`Database: ${databasePath}`)
-  console.log(`Migrations: ${MIGRATIONS_FOLDER}`)
+	console.log("Running database migrations...")
+	console.log(`Database: ${databasePath}`)
+	console.log(`Migrations: ${MIGRATIONS_FOLDER}`)
 
-  // Ensure the database directory exists
-  const dbDir = dirname(databasePath)
-  await mkdir(dbDir, { recursive: true })
+	// Ensure the database directory exists
+	const dbDir = dirname(databasePath)
+	await mkdir(dbDir, { recursive: true })
 
-  const sqlite = new Database(databasePath)
-  const db = drizzle(sqlite)
+	const sqlite = new Database(databasePath)
+	const db = drizzle(sqlite)
 
-  await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER })
+	await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER })
 
-  console.log("✓ Migrations completed successfully")
-  sqlite.close()
+	console.log("✓ Migrations completed successfully")
+	sqlite.close()
 }
-

@@ -28,7 +28,7 @@ async function testImagePull() {
 	const imageToPull = "alpine:latest"
 
 	console.log(`Testing pull of image: ${imageToPull}`)
-	console.log("=" .repeat(60))
+	console.log("=".repeat(60))
 
 	let progressCount = 0
 	const layerProgress = new Map<string, { current: number; total: number }>()

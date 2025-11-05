@@ -37,7 +37,7 @@ async function testPullImagePTY() {
 	const imageName = process.argv[2] || "alpine:latest"
 
 	console.log(`🐳 Testing image pull with PTY for: ${imageName}`)
-	console.log("=" .repeat(60))
+	console.log("=".repeat(60))
 
 	let outputCount = 0
 	let subscription: { unsubscribe: () => void } | null = null
@@ -53,7 +53,7 @@ async function testPullImagePTY() {
 			onData: (message) => {
 				if (message.type === "started") {
 					console.log("✅ Stream started! Pulling image...")
-					console.log("=" .repeat(60))
+					console.log("=".repeat(60))
 				}
 
 				if (message.type === "data") {

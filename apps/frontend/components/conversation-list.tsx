@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { api } from "@/lib/api-client"
+import { useState } from "react"
+// import { api } from "@/lib/api-client"
 
 interface Conversation {
 	id: string
@@ -15,44 +15,39 @@ interface ConversationListProps {
 	onSelectConversation: (id: string) => void
 }
 
-export function ConversationList({ activeConversationId, onSelectConversation }: ConversationListProps) {
-	const [conversations, setConversations] = useState<Conversation[]>([])
-	const [loading, setLoading] = useState(true)
+export function ConversationList({
+	activeConversationId,
+	onSelectConversation,
+}: ConversationListProps) {
+	const [conversations, _setConversations] = useState<Conversation[]>([])
+	const [loading, _setLoading] = useState(true)
 
-	useEffect(() => {
-		loadConversations()
-	}, [])
+	// useEffect(() => {
+	// 	loadConversations()
+	// }, [])
 
-	const loadConversations = async () => {
-		try {
-			setLoading(true)
-			const response = await api.api.conversations.$get()
-			const data = await response.json()
+	// const loadConversations = async () => {
+	// 	try {
+	// 		setLoading(true)
+	// 		const response = await api.api.conversations.$get()
+	// 		const data = await response.json()
 
-			if (response.ok && "conversations" in data) {
-				setConversations(data.conversations)
-			}
-		} catch (error) {
-			console.error("Failed to load conversations:", error)
-		} finally {
-			setLoading(false)
-		}
-	}
+	// 		if (response.ok && "conversations" in data) {
+	// 			setConversations(data.conversations)
+	// 		}
+	// 	} catch (error) {
+	// 		console.error("Failed to load conversations:", error)
+	// 	} finally {
+	// 		setLoading(false)
+	// 	}
+	// }
 
 	if (loading) {
-		return (
-			<div className="p-4 text-sm text-gray-500 dark:text-gray-400">
-				Loading...
-			</div>
-		)
+		return <div className="p-4 text-sm text-gray-500 dark:text-gray-400">Loading...</div>
 	}
 
 	if (conversations.length === 0) {
-		return (
-			<div className="p-4 text-sm text-gray-500 dark:text-gray-400">
-				No conversations yet
-			</div>
-		)
+		return <div className="p-4 text-sm text-gray-500 dark:text-gray-400">No conversations yet</div>
 	}
 
 	return (

@@ -7,7 +7,7 @@ async function testImagePullPTY() {
 	const imageToPull = "alpine:latest"
 
 	console.log(`Testing image pull with PTY for: ${imageToPull}`)
-	console.log("=" .repeat(60))
+	console.log("=".repeat(60))
 
 	// Create WebSocket client for subscriptions
 	const wsClient = createWSClient({

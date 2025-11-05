@@ -1,12 +1,13 @@
 /**
  * AI Chat API Route
  * Integrates AI SDK with AgisStack control plane
- * Flow: User → AI → Control Plane Tools → Agent → Docker
+ * Flow: User → AI → Control Plane Tools → Node → Docker
  */
 
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
+import { systemPrompt } from "./system-prompt"
+import { getAiTools } from "@/lib/ai-tools"
 import { streamText, convertToModelMessages, stepCountIs } from "ai"
-import { systemPrompt, getRemoteAiTools } from "@agistack/control-plane-api"
 
 // Initialize OpenRouter provider
 const openrouter = createOpenRouter({
@@ -15,16 +16,21 @@ const openrouter = createOpenRouter({
 
 export async function POST(req: Request) {
 	try {
-        const baseUrl = process.env.NEXT_PUBLIC_CP_HTTP_URL || "http://localhost:3002/api"
-        const { messages } = await req.json()
+		const { messages } = await req.json()
 
-        const result = streamText({
-            model: openrouter("anthropic/claude-3.5-sonnet"),
-            system: systemPrompt,
-            messages: convertToModelMessages(messages),
-            // Allow at most 3 steps so tools can execute and the model can respond
-            stopWhen: stepCountIs(3),
-            tools: getRemoteAiTools(baseUrl),
+		// Get AI tools (queries and mutations)
+		const { queries, mutations } = getAiTools()
+
+		// Merge all tools for now (YOLO mode toggle can be added later)
+		const tools = { ...queries, ...mutations }
+
+		const result = streamText({
+			model: openrouter("anthropic/claude-3.5-sonnet"),
+			system: systemPrompt,
+			messages: convertToModelMessages(messages),
+			// Allow at most 3 steps so tools can execute and the model can respond
+			stopWhen: stepCountIs(3),
+			tools,
 		})
 
 		// Return UI message stream response for React useChat

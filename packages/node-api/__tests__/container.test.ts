@@ -1,14 +1,18 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import { createTRPCClient, httpBatchLink } from "@trpc/client"
+import getPort from "get-port"
 import { Node } from "../Node"
 import type { AppRouter } from "../Node"
 
 describe("Node API - Container Operations", () => {
 	let node: Node
 	let client: ReturnType<typeof createTRPCClient<AppRouter>>
-	const port = 4001
+	let port: number
 
 	beforeAll(async () => {
+		// Get a free port dynamically to avoid conflicts
+		port = await getPort()
+
 		// Setup: Start Node instance
 		node = new Node(port)
 		await node.start()

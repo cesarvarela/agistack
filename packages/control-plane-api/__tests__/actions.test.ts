@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest"
 import { createTRPCClient, httpBatchLink } from "@trpc/client"
+import superjson from "superjson"
+import getPort from "get-port"
 import { ControlPlane } from "../ControlPlane"
 import type { ControlPlaneRouter } from "../ControlPlane"
 import { setupTestDatabase, type TestDatabase } from "./utils"
@@ -8,9 +10,12 @@ describe("Control Plane API - Actions", () => {
 	let controlPlane: ControlPlane
 	let client: ReturnType<typeof createTRPCClient<ControlPlaneRouter>>
 	let testDb: TestDatabase
-	const port = 4002
+	let port: number
 
 	beforeAll(async () => {
+		// Get a free port dynamically to avoid conflicts
+		port = await getPort()
+
 		// Setup database
 		testDb = await setupTestDatabase("control-plane-actions")
 
@@ -23,6 +28,7 @@ describe("Control Plane API - Actions", () => {
 			links: [
 				httpBatchLink({
 					url: `http://localhost:${port}`,
+					transformer: superjson,
 				}),
 			],
 		})

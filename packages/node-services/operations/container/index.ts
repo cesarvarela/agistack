@@ -1,2 +1,7 @@
+export { getContainerLogsOperation } from "./getContainerLogs"
 export { inspectContainerOperation } from "./inspectContainer"
 export { streamLogsOperation } from "./streamLogs"
+export { startContainerOperation } from "./startContainer"
+export { stopContainerOperation } from "./stopContainer"
+export { restartContainerOperation } from "./restartContainer"
+export { streamStatsOperation } from "./streamStats"

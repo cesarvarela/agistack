@@ -38,16 +38,13 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
 			<div className="flex">
 				<main className="flex-1 min-w-0">{children}</main>
-				<ChatSidebar
-					isOpen={isChatOpen}
-					onClose={() => setIsChatOpen(false)}
-					variant="inline"
-				/>
+				<ChatSidebar isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} variant="inline" />
 			</div>
 
 			{/* Floating chat button */}
 			{false && (
 				<button
+					type="button"
 					onClick={() => setIsChatOpen(true)}
 					className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center z-40 transition-all hover:scale-110"
 					aria-label="Open AI Chat"
@@ -61,6 +58,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 						stroke="currentColor"
 						className="w-6 h-6"
 					>
+						<title>Chat</title>
 						<path
 							strokeLinecap="round"
 							strokeLinejoin="round"

@@ -7,43 +7,59 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import dynamic from "next/dynamic"
+import { useUrlState } from "@/hooks/use-url-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ContainerLogs } from "@/components/container-logs"
 import { ContainerStats } from "@/components/container-stats"
-import { api } from "@/lib/api-client"
+import { trpc } from "@/lib/trpc"
+
+// Dynamic imports for xterm-dependent components to avoid SSR issues
+const ContainerLogs = dynamic(
+	() => import("@/components/container-logs").then((mod) => ({ default: mod.ContainerLogs })),
+	{ ssr: false },
+)
+
+const ContainerTerminal = dynamic(
+	() =>
+		import("@/components/container-terminal").then((mod) => ({ default: mod.ContainerTerminal })),
+	{ ssr: false },
+)
 
 interface ContainerDetailClientProps {
 	container: any
+	serverId: string
 }
 
-export function ContainerDetailClient({ container }: ContainerDetailClientProps) {
+export function ContainerDetailClient({ container, serverId }: ContainerDetailClientProps) {
 	const router = useRouter()
 	const [isLoading, setIsLoading] = useState<string | null>(null)
+	const [activeTab, setActiveTab] = useUrlState("tab", "overview")
 
-    const handleAction = async (action: "start" | "stop" | "restart") => {
-        setIsLoading(action)
-        try {
-            if (!container.internalId) {
-                alert("This container is not managed by the platform yet.")
-                return
-            }
-            const endpoint = api.containers[action]
-            const body: any = { containerId: container.internalId }
-            if (action !== "start") {
-                // stop/restart allow optional timeout in the future
-            }
-            const response = await endpoint.$post({ json: body })
+	const startMutation = trpc.proxy.container.start.useMutation()
+	const stopMutation = trpc.proxy.container.stop.useMutation()
+	const restartMutation = trpc.proxy.container.restart.useMutation()
 
-			if (response.ok) {
-				// Refresh the page to get updated status
-				router.refresh()
-			} else {
-				const data = await response.json()
-				alert(`Failed to ${action} container: ${data.error || "Unknown error"}`)
+	const handleAction = async (action: "start" | "stop" | "restart") => {
+		setIsLoading(action)
+		try {
+			const input = {
+				nodeId: serverId,
+				dockerId: container.dockerId,
 			}
+
+			if (action === "start") {
+				await startMutation.mutateAsync(input)
+			} else if (action === "stop") {
+				await stopMutation.mutateAsync(input)
+			} else if (action === "restart") {
+				await restartMutation.mutateAsync(input)
+			}
+
+			// Refresh the page to get updated status
+			router.refresh()
 		} catch (error) {
 			alert(`Failed to ${action} container`)
 			console.error(error)
@@ -52,8 +68,7 @@ export function ContainerDetailClient({ container }: ContainerDetailClientProps)
 		}
 	}
 
-    const isRunning = container.state === "running"
-    const isManaged = Boolean(container.internalId)
+	const isRunning = container.state === "running"
 
 	return (
 		<div className="p-8 space-y-6">
@@ -75,35 +90,38 @@ export function ContainerDetailClient({ container }: ContainerDetailClientProps)
 
 			{/* Action Buttons */}
 			<div className="flex gap-2">
-                <Button
-                    onClick={() => handleAction("start")}
-                    disabled={!isManaged || isRunning || isLoading !== null}
-                    variant="default"
-                >
-                    {isLoading === "start" ? "Starting..." : "Start"}
-                </Button>
-                <Button
-                    onClick={() => handleAction("stop")}
-                    disabled={!isManaged || !isRunning || isLoading !== null}
-                    variant="destructive"
-                >
-                    {isLoading === "stop" ? "Stopping..." : "Stop"}
-                </Button>
-                <Button
-                    onClick={() => handleAction("restart")}
-                    disabled={!isManaged || !isRunning || isLoading !== null}
-                    variant="outline"
-                >
-                    {isLoading === "restart" ? "Restarting..." : "Restart"}
-                </Button>
+				<Button
+					onClick={() => handleAction("start")}
+					disabled={isRunning || isLoading !== null}
+					variant="default"
+				>
+					{isLoading === "start" ? "Starting..." : "Start"}
+				</Button>
+				<Button
+					onClick={() => handleAction("stop")}
+					disabled={!isRunning || isLoading !== null}
+					variant="destructive"
+				>
+					{isLoading === "stop" ? "Stopping..." : "Stop"}
+				</Button>
+				<Button
+					onClick={() => handleAction("restart")}
+					disabled={!isRunning || isLoading !== null}
+					variant="outline"
+				>
+					{isLoading === "restart" ? "Restarting..." : "Restart"}
+				</Button>
 			</div>
 
 			{/* Tabs */}
-			<Tabs defaultValue="overview" className="w-full">
+			<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 				<TabsList>
 					<TabsTrigger value="overview">Overview</TabsTrigger>
 					<TabsTrigger value="logs">Logs</TabsTrigger>
 					<TabsTrigger value="stats">Stats</TabsTrigger>
+					<TabsTrigger value="terminal" disabled={!isRunning}>
+						Terminal
+					</TabsTrigger>
 					<TabsTrigger value="config">Config</TabsTrigger>
 				</TabsList>
 
@@ -180,12 +198,26 @@ export function ContainerDetailClient({ container }: ContainerDetailClientProps)
 
 				{/* Logs Tab */}
 				<TabsContent value="logs">
-					<ContainerLogs containerId={container.internalId || container.dockerId} />
+					<ContainerLogs
+						containerId={container.internalId || container.dockerId}
+						serverId={serverId}
+					/>
 				</TabsContent>
 
 				{/* Stats Tab */}
 				<TabsContent value="stats">
-					<ContainerStats containerId={container.internalId || container.dockerId} />
+					<ContainerStats
+						containerId={container.internalId || container.dockerId}
+						serverId={serverId}
+					/>
+				</TabsContent>
+
+				{/* Terminal Tab */}
+				<TabsContent value="terminal">
+					<ContainerTerminal
+						containerId={container.internalId || container.dockerId}
+						serverId={serverId}
+					/>
 				</TabsContent>
 
 				{/* Config Tab */}

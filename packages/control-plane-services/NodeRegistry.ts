@@ -14,7 +14,9 @@ export class NodeRegistry {
 	 * Get node database record by ID
 	 */
 	getNodeRecord(nodeId: string): DBNode {
-		const node = this.db.select().from(nodes).where(eq(nodes.id, nodeId)).get() as DBNode | undefined
+		const node = this.db.select().from(nodes).where(eq(nodes.id, nodeId)).get() as
+			| DBNode
+			| undefined
 
 		if (!node) {
 			throw new Error(`Node not found: ${nodeId}`)

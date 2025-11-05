@@ -3,8 +3,7 @@
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
-	"scripts": {
-	},
+	"scripts": {},
 	"dependencies": {
 		"@agistack/control-plane-api": "workspace:*",
 		"@agistack/db": "workspace:*",

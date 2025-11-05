@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { api } from "@/lib/api-client"
+// import { api } from "@/lib/api-client"
 
 interface MessageWithToolCalls {
 	id?: string
@@ -52,9 +52,9 @@ export function MessageList({ conversationId, messages: externalMessages }: Mess
 
 		try {
 			setLoading(true)
-            const response = await api.conversations[":id"].$get({
-                param: { id: conversationId },
-            })
+			const response = await api.conversations[":id"].$get({
+				param: { id: conversationId },
+			})
 			const data = await response.json()
 
 			if (response.ok && "conversation" in data) {
@@ -150,7 +150,9 @@ export function MessageList({ conversationId, messages: externalMessages }: Mess
 								: "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
 						}`}
 					>
-						<div className="text-sm whitespace-pre-wrap break-words">{renderContent((message as any).content ?? (message as any).parts)}</div>
+						<div className="text-sm whitespace-pre-wrap break-words">
+							{renderContent((message as any).content ?? (message as any).parts)}
+						</div>
 
 						{/* Display tool calls if present */}
 						{message.toolInvocations && message.toolInvocations.length > 0 && (

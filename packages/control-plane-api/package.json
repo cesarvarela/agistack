@@ -15,8 +15,8 @@
 		"format": "biome format --write ."
 	},
 	"dependencies": {
-		"@agistack/db": "workspace:*",
 		"@agistack/control-plane-services": "workspace:*",
+		"@agistack/db": "workspace:*",
 		"@agistack/node-api": "workspace:*",
 		"@agistack/node-services": "workspace:*",
 		"@openrouter/ai-sdk-provider": "^1.2.0",
@@ -25,11 +25,13 @@
 		"ai": "^5.0.0",
 		"drizzle-orm": "^0.33.0",
 		"nanoid": "^5.0.4",
+		"superjson": "^2.2.5",
 		"ws": "^8.18.0",
 		"zod": "^4.1.12"
 	},
 	"devDependencies": {
 		"@types/ws": "^8.18.1",
+		"get-port": "^7.1.0",
 		"typescript": "^5.3.0",
 		"vitest": "^3.0.0"
 	}

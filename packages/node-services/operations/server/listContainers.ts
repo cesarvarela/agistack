@@ -1,7 +1,22 @@
 import { z } from "zod"
-import type { DockerContainer } from "../types"
 import type { HttpOperation } from "../types"
 import { createPtyExecute } from "../utils/ptyOperation"
+import { containerListItemSchema } from "../../types"
+
+/**
+ * Raw Docker container output from `docker ps --format json`
+ * Only used internally for parsing, not exposed in API
+ */
+interface DockerContainerRaw {
+	ID: string
+	Names: string
+	Image: string
+	State: string
+	Status: string
+	Ports?: string
+	CreatedAt?: string
+	Labels?: string
+}
 
 const inputSchema = z.object({
 	status: z
@@ -11,26 +26,7 @@ const inputSchema = z.object({
 })
 
 const outputSchema = z.object({
-	containers: z.array(
-		z.object({
-			dockerId: z.string().describe("Docker container ID"),
-			name: z.string().describe("Container name from Docker"),
-			image: z.string().describe("Image name from Docker"),
-			status: z.string().describe("Container status from Docker"),
-			state: z.string().describe("Container state from Docker"),
-			ports: z
-				.array(
-					z.object({
-						PrivatePort: z.number(),
-						PublicPort: z.number().optional(),
-						Type: z.string(),
-					}),
-				)
-				.describe("Port mappings from Docker"),
-			created: z.number().describe("Container creation timestamp from Docker"),
-			labels: z.record(z.string(), z.coerce.string()).describe("Docker labels"),
-		}),
-	),
+	containers: z.array(containerListItemSchema),
 })
 
 type InputSchema = z.infer<typeof inputSchema>
@@ -51,15 +47,15 @@ export const listContainersOperation: HttpOperation<InputSchema, OutputSchema> =
 			args: ["ps", "-a", "--format", "{{json .}}"],
 		}),
 		(input: InputSchema, stdout: string) => {
-			const dockerContainers: DockerContainer[] = stdout
+			const dockerContainers: DockerContainerRaw[] = stdout
 				.trim()
 				.split("\n")
 				.filter(Boolean)
 				.map((line) => {
 					try {
-						return JSON.parse(line) as DockerContainer
+						return JSON.parse(line) as DockerContainerRaw
 					} catch {
-						return {} as DockerContainer
+						return {} as DockerContainerRaw
 					}
 				})
 
@@ -68,7 +64,7 @@ export const listContainersOperation: HttpOperation<InputSchema, OutputSchema> =
 				// Parse Labels string into object
 				const labelsObj: Record<string, string> = {}
 				if (dc.Labels) {
-					dc.Labels.split(",").forEach((label) => {
+					dc.Labels.split(",").forEach((label: string) => {
 						const [key, ...valueParts] = label.split("=")
 						if (key) {
 							labelsObj[key] = valueParts.join("=") || ""
@@ -80,7 +76,7 @@ export const listContainersOperation: HttpOperation<InputSchema, OutputSchema> =
 				const portsArray: Array<{ PrivatePort: number; PublicPort?: number; Type: string }> = []
 				if (dc.Ports) {
 					// Example: "0.0.0.0:8080->80/tcp, 443/tcp"
-					dc.Ports.split(",").forEach((portStr) => {
+					dc.Ports.split(",").forEach((portStr: string) => {
 						const trimmed = portStr.trim()
 						if (!trimmed) return
 

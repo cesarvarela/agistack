@@ -4,8 +4,8 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "pnpm --watch index.ts",
-		"start": "pnpm run index.ts",
+		"dev": "tsx --watch index.ts",
+		"start": "tsx index.ts",
 		"check-types": "tsc --noEmit",
 		"lint": "biome lint .",
 		"lint:fix": "biome lint --write .",

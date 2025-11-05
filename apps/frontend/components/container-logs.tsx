@@ -2,64 +2,138 @@
 
 /**
  * Container Logs Component
- * Real-time log viewer using WebSocket
+ * Real-time log viewer using tRPC WebSocket subscriptions
  */
 
 import { useEffect, useRef, useState } from "react"
+import { Terminal } from "@xterm/xterm"
+import { FitAddon } from "@xterm/addon-fit"
+import type { OperationEvent } from "@agistack/node-services/operations"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useWebSocket } from "@/lib/use-websocket"
+import { trpc } from "@/lib/trpc"
+import "@xterm/xterm/css/xterm.css"
 
 interface ContainerLogsProps {
 	containerId: string
+	serverId: string
 }
 
-export function ContainerLogs({ containerId }: ContainerLogsProps) {
-	const [logs, setLogs] = useState<string[]>([])
+export function ContainerLogs({ containerId, serverId }: ContainerLogsProps) {
 	const [autoScroll, setAutoScroll] = useState(true)
-	const logsEndRef = useRef<HTMLDivElement>(null)
-	const { send, on, isConnected } = useWebSocket()
-	const [opId, setOpId] = useState<string | null>(null)
+	const [isConnected, setIsConnected] = useState(false)
+	const terminalRef = useRef<HTMLDivElement>(null)
+	const xtermRef = useRef<Terminal | null>(null)
+	const fitAddonRef = useRef<FitAddon | null>(null)
 
-	// Subscribe to logs on mount
+	// Initialize terminal
 	useEffect(() => {
-		if (!isConnected) return
+		if (!terminalRef.current || xtermRef.current) return
 
-		// Start operation for logs follow
-		send({ type: "start_operation", op: "container.logs", input: { containerId, tail: 100 } })
-
-		const offStarted = on("operation_started", (m) => {
-			if (m?.opId) setOpId(m.opId)
+		// Create terminal instance
+		const terminal = new Terminal({
+			cursorBlink: false,
+			disableStdin: true, // Read-only for logs
+			fontSize: 14,
+			fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+			theme: {
+				background: "#000000",
+				foreground: "#4ade80", // green-400
+			},
+			rows: 30,
 		})
-		const offEvent = on("operation_event", (m) => {
-			if (m?.opId !== opId) return
-			if (m?.event?.type === "log" && typeof m.event.line === "string") {
-				setLogs((prev) => [...prev, m.event.line])
-			}
-		})
 
+		// Create and load fit addon
+		const fitAddon = new FitAddon()
+		terminal.loadAddon(fitAddon)
+
+		// Open terminal in DOM
+		terminal.open(terminalRef.current)
+
+		// Fit after terminal is rendered to avoid renderer errors
+		setTimeout(() => {
+			fitAddon.fit()
+		}, 0)
+
+		// Store refs
+		xtermRef.current = terminal
+		fitAddonRef.current = fitAddon
+
+		// Handle window resize
+		const handleResize = () => {
+			fitAddon.fit()
+		}
+		window.addEventListener("resize", handleResize)
+
+		// Cleanup
 		return () => {
-			offStarted()
-			offEvent()
-			if (opId) {
-				send({ type: "unsubscribe_op", opId })
-			}
+			window.removeEventListener("resize", handleResize)
+			terminal.dispose()
+			xtermRef.current = null
+			fitAddonRef.current = null
 		}
-	}, [containerId, isConnected, send, on, opId])
+	}, [])
 
-	// Auto-scroll to bottom when new logs arrive
-	useEffect(() => {
-		if (autoScroll && logsEndRef.current) {
-			logsEndRef.current.scrollIntoView({ behavior: "smooth" })
-		}
-	}, [logs, autoScroll])
+	// Subscribe to logs via tRPC
+	trpc.proxy.container.streamLogs.useSubscription(
+		{
+			nodeId: serverId,
+			dockerId: containerId,
+			tail: 100,
+			follow: true,
+		},
+		{
+			onData: (event: OperationEvent<{ output: string }>) => {
+				if (event.type === "started") {
+					setIsConnected(true)
+				} else if (event.type === "data") {
+					// Write log to terminal
+					if (xtermRef.current) {
+						xtermRef.current.write(event.data.output)
+						// Auto-scroll to bottom if enabled
+						if (autoScroll) {
+							xtermRef.current.scrollToBottom()
+						}
+					}
+				} else if (event.type === "error") {
+					console.error("Log stream error:", event.error)
+					setIsConnected(false)
+				} else if (event.type === "complete") {
+					setIsConnected(false)
+				}
+			},
+			onError: (err) => {
+				console.error("Subscription error:", err)
+				setIsConnected(false)
+			},
+		},
+	)
 
 	const handleClear = () => {
-		setLogs([])
+		if (xtermRef.current) {
+			xtermRef.current.clear()
+		}
 	}
 
 	const handleCopy = () => {
-		navigator.clipboard.writeText(logs.join("\n"))
+		if (xtermRef.current) {
+			const selection = xtermRef.current.getSelection()
+			if (selection) {
+				// Copy selected text
+				navigator.clipboard.writeText(selection)
+			} else {
+				// Copy all buffer content
+				const buffer = xtermRef.current.buffer.active
+				const lines: string[] = []
+				for (let i = 0; i < buffer.length; i++) {
+					const line = buffer.getLine(i)
+					if (line) {
+						lines.push(line.translateToString(true))
+					}
+				}
+				navigator.clipboard.writeText(lines.join("\n"))
+			}
+		}
 	}
 
 	return (
@@ -87,20 +161,7 @@ export function ContainerLogs({ containerId }: ContainerLogsProps) {
 				</div>
 			</CardHeader>
 			<CardContent>
-				<div className="bg-black text-green-400 font-mono text-sm p-4 rounded h-[600px] overflow-auto">
-					{logs.length === 0 ? (
-						<p className="text-gray-500">No logs yet...</p>
-					) : (
-						<>
-							{logs.map((log, idx) => (
-								<div key={idx} className="whitespace-pre-wrap break-all">
-									{log}
-								</div>
-							))}
-							<div ref={logsEndRef} />
-						</>
-					)}
-				</div>
+				<div ref={terminalRef} className="rounded h-[600px] overflow-hidden" />
 			</CardContent>
 		</Card>
 	)

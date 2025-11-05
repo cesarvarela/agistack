@@ -146,7 +146,7 @@ export function createPtyExecute<TInput, TOutput>(
 		return new Promise((resolve, reject) => {
 			const { command, args } = buildCommand(input)
 			let stdout = ""
-			let stderr = ""
+			const stderr = ""
 
 			// Create PTY process
 			const ptyProcess = pty.spawn(command, args, {
