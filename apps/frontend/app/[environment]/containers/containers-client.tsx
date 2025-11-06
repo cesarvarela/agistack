@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import type { ContainerListItem, ContainerPort } from "@agistack/tool-metadata"
 import { trpc } from "@/lib/trpc"
 
@@ -123,12 +124,12 @@ export function ContainersClient({ environment }: ContainersClientProps) {
 									</div>
 								</td>
 								<td className="px-4 py-3 text-sm font-medium">
-									<a
+									<Link
 										href={`/${environment}/containers/${container.dockerId}`}
 										className="text-blue-600 hover:text-blue-900"
 									>
 										View
-									</a>
+									</Link>
 								</td>
 							</tr>
 						))}

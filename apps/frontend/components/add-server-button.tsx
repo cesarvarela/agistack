@@ -39,11 +39,11 @@ export function AddServerButton() {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button variant="outline">Add Node</Button>
+				<Button variant="outline">Add Environment</Button>
 			</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle>Add Node</DialogTitle>
+					<DialogTitle>Add Environment</DialogTitle>
 				</DialogHeader>
 				<form onSubmit={onSubmit} className="space-y-4">
 					<div>
@@ -55,7 +55,7 @@ export function AddServerButton() {
 							value={name}
 							onChange={(e) => setName(e.target.value)}
 							required
-							placeholder="Production Node"
+							placeholder="Production"
 						/>
 					</div>
 					<div>
@@ -82,7 +82,7 @@ export function AddServerButton() {
 							Cancel
 						</Button>
 						<Button type="submit" disabled={addNodeMutation.isPending}>
-							{addNodeMutation.isPending ? "Adding..." : "Add Node"}
+							{addNodeMutation.isPending ? "Adding..." : "Add Environment"}
 						</Button>
 					</div>
 				</form>

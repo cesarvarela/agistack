@@ -41,7 +41,6 @@ export function ContainerTerminal({ containerId, serverId }: ContainerTerminalPr
 				foreground: "#ffffff",
 			},
 			rows: 30,
-			cols: 120,
 		})
 
 		// Create and load fit addon

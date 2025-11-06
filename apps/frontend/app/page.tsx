@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { trpc } from "@/lib/trpc"
+import { AddServerButton } from "@/components/add-server-button"
 
 export default function Home() {
 	const { data, isLoading } = trpc.actions.listNodes.useQuery({})
@@ -56,7 +57,10 @@ export default function Home() {
 
 	return (
 		<div className="container mx-auto p-8">
-			<h1 className="text-3xl font-bold mb-8">Environments</h1>
+			<div className="flex items-center justify-between mb-8">
+				<h1 className="text-3xl font-bold">Environments</h1>
+				<AddServerButton />
+			</div>
 
 			{nodes.length === 0 ? (
 				<div className="text-center py-12">

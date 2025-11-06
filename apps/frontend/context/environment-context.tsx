@@ -28,8 +28,14 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
 
 		const segments = pathname.split("/").filter(Boolean)
 		const firstSegment = segments[0]
+
+		// List of reserved routes that are not environments
+		const reservedRoutes = ["api", "settings"]
+
 		const environment: EnvId =
-			segments.length > 0 && firstSegment && firstSegment !== "api" ? firstSegment : null
+			segments.length > 0 && firstSegment && !reservedRoutes.includes(firstSegment)
+				? firstSegment
+				: null
 
 		setSelected(environment)
 		setReady(true)

@@ -4,18 +4,136 @@ import { useChat } from "@ai-sdk/react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { trpc } from "@/lib/trpc"
 
 interface ChatInputProps {
 	conversationId: string | null
-	onMessagesUpdate?: (messages: any[]) => void
+	onMessagesUpdate?: (messages: unknown[]) => void
 }
 
 export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }: ChatInputProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null)
 	const [text, setText] = useState("")
 	const [sending, setSending] = useState(false)
+	const trpcUtils = trpc.useContext()
 
-	const { messages, sendMessage } = useChat()
+	const { messages, sendMessage, addToolResult } = useChat({
+		onToolCall: async ({ toolCall }) => {
+			// Skip dynamic tool calls for proper type narrowing
+			if (toolCall.dynamic) return
+
+			try {
+				let output: unknown
+				// biome-ignore lint/suspicious/noExplicitAny: toolCall.input type is unknown, needs runtime casting
+				const input = toolCall.input as Record<string, any>
+
+				switch (toolCall.toolName) {
+					// Query tools
+					case "listNodes":
+						output = await trpcUtils.client.actions.listNodes.query({})
+						break
+
+					case "getNodeInfo":
+						output = await trpcUtils.client.actions.getNodeInfo.query({
+							nodeId: input.nodeId,
+						})
+						break
+
+					case "listContainers":
+						output = await trpcUtils.client.proxy.container.list.query({
+							nodeId: input.nodeId,
+							status: input.status,
+						})
+						break
+
+					case "inspectContainer":
+						output = await trpcUtils.client.proxy.container.inspect.query({
+							nodeId: input.nodeId,
+							dockerId: input.dockerId,
+						})
+						break
+
+					case "getContainerLogs":
+						output = await trpcUtils.client.proxy.container.logs.query({
+							nodeId: input.nodeId,
+							containerId: input.containerId,
+							lines: input.lines,
+							since: input.since,
+						})
+						break
+
+					// Mutation tools
+					case "addNode":
+						output = await trpcUtils.client.actions.addNode.mutate({
+							name: input.name,
+							url: input.url,
+						})
+						// Invalidate nodes list
+						await trpcUtils.actions.listNodes.invalidate()
+						break
+
+					case "deleteNode":
+						output = await trpcUtils.client.actions.deleteNode.mutate({
+							id: input.id,
+						})
+						// Invalidate nodes list
+						await trpcUtils.actions.listNodes.invalidate()
+						break
+
+					case "startContainer":
+						output = await trpcUtils.client.proxy.container.start.mutate({
+							nodeId: input.nodeId,
+							dockerId: input.dockerId,
+						})
+						// Invalidate container queries
+						await trpcUtils.proxy.container.list.invalidate()
+						await trpcUtils.proxy.container.inspect.invalidate()
+						break
+
+					case "stopContainer":
+						output = await trpcUtils.client.proxy.container.stop.mutate({
+							nodeId: input.nodeId,
+							dockerId: input.dockerId,
+							timeout: input.timeout,
+						})
+						// Invalidate container queries
+						await trpcUtils.proxy.container.list.invalidate()
+						await trpcUtils.proxy.container.inspect.invalidate()
+						break
+
+					case "restartContainer":
+						output = await trpcUtils.client.proxy.container.restart.mutate({
+							nodeId: input.nodeId,
+							dockerId: input.dockerId,
+							timeout: input.timeout,
+						})
+						// Invalidate container queries
+						await trpcUtils.proxy.container.list.invalidate()
+						await trpcUtils.proxy.container.inspect.invalidate()
+						break
+
+					default:
+						// Unknown tool - skip
+						return
+				}
+
+				// Send result back to AI (no await to avoid deadlocks)
+				addToolResult({
+					tool: toolCall.toolName,
+					toolCallId: toolCall.toolCallId,
+					output: output,
+				})
+			} catch (error) {
+				// Send error back to AI
+				addToolResult({
+					tool: toolCall.toolName,
+					toolCallId: toolCall.toolCallId,
+					state: "output-error",
+					errorText: error instanceof Error ? error.message : "Unknown error",
+				})
+			}
+		},
+	})
 
 	// Bubble messages up to parent for live display when no conversation selected
 	useEffect(() => {
