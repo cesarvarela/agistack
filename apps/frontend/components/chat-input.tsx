@@ -1,9 +1,12 @@
 "use client"
 
 import { useChat } from "@ai-sdk/react"
+import { lastAssistantMessageIsCompleteWithToolCalls } from "ai"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { useEnvironment } from "@/context/environment-context"
 import { trpc } from "@/lib/trpc"
 
 interface ChatInputProps {
@@ -13,11 +16,15 @@ interface ChatInputProps {
 
 export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }: ChatInputProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null)
+	const abortControllerRef = useRef<AbortController | null>(null)
 	const [text, setText] = useState("")
 	const [sending, setSending] = useState(false)
+	const environment = useEnvironment()
+	const pathname = usePathname()
 	const trpcUtils = trpc.useContext()
 
 	const { messages, sendMessage, addToolResult } = useChat({
+		sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
 		onToolCall: async ({ toolCall }) => {
 			// Skip dynamic tool calls for proper type narrowing
 			if (toolCall.dynamic) return
@@ -169,18 +176,42 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 		const value = text.trim()
 		if (!value) return
 		setText("")
+
+		// Create new AbortController for this request
+		abortControllerRef.current = new AbortController()
+
 		try {
 			setSending(true)
-			await sendMessage({
-				role: "user" as const,
-				parts: [
-					{
-						type: "text",
-						text: value,
+			await sendMessage(
+				{
+					role: "user" as const,
+					parts: [
+						{
+							type: "text",
+							text: value,
+						},
+					],
+				} as any,
+				{
+					body: {
+						signal: abortControllerRef.current.signal,
+						context: {
+							environment: environment.selected,
+							pathname: pathname,
+						},
 					},
-				],
-			} as any)
+				}
+			)
 		} finally {
+			setSending(false)
+			abortControllerRef.current = null
+		}
+	}
+
+	const handleStop = () => {
+		if (abortControllerRef.current) {
+			abortControllerRef.current.abort()
+			abortControllerRef.current = null
 			setSending(false)
 		}
 	}
@@ -207,9 +238,20 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 					className="flex-1 resize-none min-h-[40px] max-h-[200px]"
 					rows={1}
 				/>
-				<Button type="submit" disabled={!text.trim() || sending} className="self-end">
-					{sending ? "..." : "Send"}
-				</Button>
+				{sending ? (
+					<Button
+						type="button"
+						onClick={handleStop}
+						variant="destructive"
+						className="self-end"
+					>
+						Stop
+					</Button>
+				) : (
+					<Button type="submit" disabled={!text.trim()} className="self-end">
+						Send
+					</Button>
+				)}
 			</form>
 			{sending && (
 				<div className="text-xs text-gray-500 dark:text-gray-400 mt-2">AI is typing...</div>

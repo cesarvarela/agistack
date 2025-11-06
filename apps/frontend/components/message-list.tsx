@@ -1,90 +1,23 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
-
-// import { api } from "@/lib/api-client"
-
-interface MessageWithToolCalls {
-	id?: string
-	role: string
-	content: any
-	toolInvocations?: Array<{
-		toolCallId: string
-		toolName: string
-		args: unknown
-		result?: unknown
-		state: "call" | "result" | "error"
-	}>
-}
+import type { UIMessage } from "@ai-sdk/react"
+import { useEffect, useRef } from "react"
+import { MessagePartText } from "./message-part-text"
+import { ReasoningPart } from "./message-part-reasoning"
+import { ToolCallPart } from "./message-part-tool-call"
 
 interface MessageListProps {
 	conversationId: string | null
-	messages?: MessageWithToolCalls[]
+	messages?: UIMessage[]
 }
 
-export function MessageList({ conversationId, messages: externalMessages }: MessageListProps) {
-	const [messages, setMessages] = useState<MessageWithToolCalls[]>([])
-	const [loading, setLoading] = useState(false)
+export function MessageList({ messages = [] }: MessageListProps) {
 	const messagesEndRef = useRef<HTMLDivElement>(null)
-
-	// Use external messages if provided (for new conversations)
-	useEffect(() => {
-		if (externalMessages) {
-			setMessages(externalMessages)
-		}
-	}, [externalMessages])
-
-	const loadMessages = useCallback(async () => {
-		if (!conversationId) return
-
-		// TODO: Implement conversation loading when api client is available
-		// try {
-		// 	setLoading(true)
-		// 	const response = await api.conversations[":id"].$get({
-		// 		param: { id: conversationId },
-		// 	})
-		// 	const data = await response.json()
-
-		// 	if (response.ok && "conversation" in data) {
-		// 		// Convert stored messages to UI format; DB stores string content
-		// 		const convertedMessages =
-		// 			data.conversation.messages?.map((msg: any) => ({
-		// 				id: msg.id,
-		// 				role: msg.role,
-		// 				content: msg.content,
-		// 				toolInvocations: msg.toolCalls ? JSON.parse(msg.toolCalls) : undefined,
-		// 			})) || []
-
-		// 		setMessages(convertedMessages)
-		// 	}
-		// } catch (error) {
-		// 	console.error("Failed to load messages:", error)
-		// } finally {
-		// 	setLoading(false)
-		// }
-	}, [conversationId])
-
-	// Load conversation messages if conversationId is provided
-	useEffect(() => {
-		if (conversationId) {
-			loadMessages()
-		} else {
-			setMessages([])
-		}
-	}, [conversationId, loadMessages])
 
 	// Auto-scroll to bottom when messages change
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-	}, [])
-
-	if (loading) {
-		return (
-			<div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
-				Loading messages...
-			</div>
-		)
-	}
+	}, [messages])
 
 	if (messages.length === 0) {
 		return (
@@ -95,47 +28,6 @@ export function MessageList({ conversationId, messages: externalMessages }: Mess
 				</div>
 			</div>
 		)
-	}
-
-	function renderContent(content: any): string {
-		if (content == null) return ""
-		if (typeof content === "string") return content
-		// Array of UI parts
-		if (Array.isArray(content)) {
-			try {
-				return content
-					.map((p: any) => {
-						if (!p || typeof p !== "object") return ""
-						if (p.type === "text") return String(p.text ?? "")
-						// Some providers may use { text: "..." }
-						if ("text" in p) return String((p as any).text ?? "")
-						return ""
-					})
-					.join("")
-			} catch {
-				return ""
-			}
-		}
-		// Single part object
-		if (typeof content === "object") {
-			try {
-				if ("type" in content && (content as any).type === "text") {
-					return String((content as any).text ?? "")
-				}
-				if ("text" in content) {
-					return String((content as any).text ?? "")
-				}
-				if ("content" in content) {
-					return renderContent((content as any).content)
-				}
-			} catch {}
-			try {
-				return JSON.stringify(content)
-			} catch {
-				return ""
-			}
-		}
-		return ""
 	}
 
 	return (
@@ -152,43 +44,61 @@ export function MessageList({ conversationId, messages: externalMessages }: Mess
 								: "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100"
 						}`}
 					>
-						<div className="text-sm whitespace-pre-wrap break-words">
-							{renderContent((message as any).content ?? (message as any).parts)}
-						</div>
+						{/* Render message parts */}
+						{message.parts?.map((part, index) => {
+							// Text part
+							if (part.type === "text") {
+								return (
+									<MessagePartText
+										key={`${message.id}-text-${index}`}
+										text={part.text}
+									/>
+								)
+							}
 
-						{/* Display tool calls if present */}
-						{message.toolInvocations && message.toolInvocations.length > 0 && (
-							<div className="mt-2 space-y-1">
-								{message.toolInvocations.map((tool, index) => (
-									<details
-										key={tool.toolCallId || index}
-										className="text-xs bg-black/10 dark:bg-white/10 rounded p-2"
-									>
-										<summary className="cursor-pointer font-medium">
-											🔧 {tool.toolName}
-											{tool.state === "call" && " (calling...)"}
-											{tool.state === "error" && " (error)"}
-										</summary>
-										<div className="mt-2 space-y-1">
-											<div>
-												<strong>Args:</strong>
-												<pre className="text-xs overflow-x-auto">
-													{JSON.stringify(tool.args, null, 2)}
-												</pre>
-											</div>
-											{tool.result ? (
-												<div>
-													<strong>Result:</strong>
-													<pre className="text-xs overflow-x-auto">
-														{JSON.stringify(tool.result, null, 2) || ""}
-													</pre>
-												</div>
-											) : null}
-										</div>
-									</details>
-								))}
-							</div>
-						)}
+							// Reasoning part (thinking)
+							if (part.type === "reasoning") {
+								return (
+									<ReasoningPart
+										key={`${message.id}-reasoning-${index}`}
+										content={part.text}
+										streaming={false}
+									/>
+								)
+							}
+
+							// Tool part (combined call and result)
+							if (part.type.startsWith("tool-")) {
+								// Type narrowing for tool parts
+								const toolPart = part as {
+									type: string
+									toolCallId: string
+									toolName?: string
+									input?: unknown
+									output?: unknown
+									errorText?: string
+									state?: string
+								}
+
+								const toolName = toolPart.toolName || toolPart.type.replace("tool-", "")
+								const hasError = Boolean(toolPart.errorText)
+								const hasOutput = toolPart.output !== undefined
+
+								return (
+									<ToolCallPart
+										key={toolPart.toolCallId}
+										toolName={toolName}
+										state={hasOutput || hasError ? "result" : "call"}
+										args={toolPart.input as Record<string, unknown>}
+										result={toolPart.output}
+										error={toolPart.errorText}
+									/>
+								)
+							}
+
+							// Unknown part type - skip
+							return null
+						})}
 					</div>
 				</div>
 			))}

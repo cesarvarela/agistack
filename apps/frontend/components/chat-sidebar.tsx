@@ -12,6 +12,7 @@ export function ChatSidebar() {
 	const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
 	const [liveMessages, setLiveMessages] = useState<any[]>([])
 	const [conversations, _setConversations] = useState<Array<{ id: string; title: string }>>([])
+	const [chatKey, setChatKey] = useState(0)
 
 	// // Load conversations list if backend supports it
 	// useEffect(() => {
@@ -53,7 +54,15 @@ export function ChatSidebar() {
 							</option>
 						))}
 					</Select>
-					<Button size="sm" variant="outline" onClick={() => setActiveConversationId(null)}>
+					<Button
+						size="sm"
+						variant="outline"
+						onClick={() => {
+							setActiveConversationId(null)
+							setLiveMessages([])
+							setChatKey((prev) => prev + 1)
+						}}
+					>
 						New
 					</Button>
 				</div>
@@ -71,9 +80,9 @@ export function ChatSidebar() {
 			{/* Chat input */}
 			<div className="flex flex-col gap-2 p-2 border-t">
 				{activeConversationId ? (
-					<ChatInput conversationId={activeConversationId} />
+					<ChatInput key={chatKey} conversationId={activeConversationId} />
 				) : (
-					<ChatInput conversationId={null} onMessagesUpdate={setLiveMessages} />
+					<ChatInput key={chatKey} conversationId={null} onMessagesUpdate={setLiveMessages} />
 				)}
 			</div>
 		</div>

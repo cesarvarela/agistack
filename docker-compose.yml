@@ -1,0 +1,32 @@
+services:
+  agistack:
+    image: ghcr.io/agistack/agistack:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - agistack-data:/app/data
+    environment:
+      DATABASE_PATH: /app/data/db.sqlite
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-anthropic/claude-3.5-sonnet}
+      NEXT_PUBLIC_CP_URL: http://localhost:4002
+    ports:
+      - "3000:3000"  # Frontend
+      - "4001:4001"  # Local Agent
+      - "4002:4002"  # Control Plane
+    restart: unless-stopped
+
+  agent:
+    image: ghcr.io/agistack/agent:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    ports:
+      - "4003:4001"  # Remote Agent (mapped to different port to avoid conflict)
+    restart: unless-stopped
+    profiles:
+      - remote  # Only start with: docker-compose --profile remote up
+
+volumes:
+  agistack-data:

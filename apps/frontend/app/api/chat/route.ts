@@ -9,29 +9,66 @@ import { convertToModelMessages, stepCountIs, streamText } from "ai"
 import { getAiTools } from "@/lib/ai-tools"
 import { systemPrompt } from "./system-prompt"
 
+interface ChatContext {
+	environment: string | null
+	pathname: string
+}
+
+function buildSystemPrompt(context?: ChatContext): string {
+	if (!context) return systemPrompt
+
+	const contextInfo: string[] = []
+
+	if (context.environment) {
+		contextInfo.push(`- Current environment: ${context.environment}`)
+	}
+
+	if (context.pathname) {
+		contextInfo.push(`- Current page: ${context.pathname}`)
+	}
+
+	if (contextInfo.length === 0) return systemPrompt
+
+	return `${systemPrompt}
+
+## Current Session Context
+
+${contextInfo.join("\n")}
+
+Use this context to provide more relevant responses. Default to the current environment for operations unless the user specifies otherwise.`
+}
+
 // Initialize OpenRouter provider
 const openrouter = createOpenRouter({
-	apiKey: process.env.OPENROUTER_API_KEY || "",
+	apiKey: process.env.OPENROUTER_API_KEY,
 })
 
 export async function POST(req: Request) {
 	try {
-		const { messages } = await req.json()
+		const { messages, context } = await req.json()
 
 		// Get AI tools - all execution happens client-side
 		const tools = getAiTools()
 
+		// Build contextual system prompt with environment and page info
+		const contextualPrompt = buildSystemPrompt(context)
+
 		const result = streamText({
-			model: openrouter("minimax/minimax-m2:free"),
-			system: systemPrompt,
+			model: openrouter("anthropic/claude-haiku-4.5"),
+			system: contextualPrompt,
 			messages: convertToModelMessages(messages),
 			// Allow up to 15 steps for multi-step workflows (query → action → verify)
 			stopWhen: stepCountIs(15),
 			tools,
+			// Pass abort signal to enable cancellation
+			abortSignal: req.signal,
 		})
 
 		// Return UI message stream response for React useChat
-		return result.toUIMessageStreamResponse()
+		// Enable reasoning to separate thinking from final response
+		return result.toUIMessageStreamResponse({
+			sendReasoning: true,
+		})
 	} catch (error) {
 		console.error("Chat API error:", error)
 		return new Response(
