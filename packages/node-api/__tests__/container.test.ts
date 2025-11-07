@@ -76,7 +76,10 @@ describe("Node API - Container Operations", () => {
 
 			// If there are containers, validate the structure
 			if (response.containers.length > 0) {
-				const container = response.containers[0]!
+				const container = response.containers[0]
+				if (!container) {
+					throw new Error("Expected at least one container")
+				}
 
 				expect(container).toHaveProperty("dockerId")
 				expect(typeof container.dockerId).toBe("string")

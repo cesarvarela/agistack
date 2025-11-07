@@ -95,10 +95,18 @@ describe("Control Plane API - streamStats Subscription", () => {
 			return
 		}
 
-		const testContainer = containers.containers[0]!
+		const testContainer = containers.containers[0]
+		if (!testContainer) {
+			throw new Error("Expected at least one container")
+		}
 
 		// Subscribe to streamStats
-		const statsChunks: any[] = []
+		const statsChunks: Array<{
+			cpu: number
+			memory: { usage: number; limit: number; percent: number }
+			network: { rx: number; tx: number }
+			blockIO: { read: number; write: number }
+		}> = []
 		const startTime = Date.now()
 
 		await new Promise<void>((resolve, reject) => {
@@ -108,43 +116,56 @@ describe("Control Plane API - streamStats Subscription", () => {
 					dockerId: testContainer.dockerId,
 				},
 				{
-					onData: (event: any) => {
+					onData: (event: unknown) => {
 						try {
 							console.log("Received event:", JSON.stringify(event, null, 2))
 
-							// Check if it's a data event with stats
-							if (event.type === "data") {
-								const stats = event.data
+							// Type guard for event structure
+							if (
+								typeof event === "object" &&
+								event !== null &&
+								"type" in event &&
+								typeof event.type === "string"
+							) {
+								// Check if it's a data event with stats
+								if (event.type === "data" && "data" in event) {
+									const stats = event.data as {
+										cpu: number
+										memory: { usage: number; limit: number; percent: number }
+										network: { rx: number; tx: number }
+										blockIO: { read: number; write: number }
+									}
 
-								// Verify stats object is defined
-								expect(stats).toBeDefined()
+									// Verify stats object is defined
+									expect(stats).toBeDefined()
 
-								// Verify stats has all required properties with correct types
-								expect(stats.cpu).toBeTypeOf("number")
-								expect(stats.memory).toBeDefined()
-								expect(stats.memory.usage).toBeTypeOf("number")
-								expect(stats.memory.limit).toBeTypeOf("number")
-								expect(stats.memory.percent).toBeTypeOf("number")
-								expect(stats.network).toBeDefined()
-								expect(stats.network.rx).toBeTypeOf("number")
-								expect(stats.network.tx).toBeTypeOf("number")
-								expect(stats.blockIO).toBeDefined()
-								expect(stats.blockIO.read).toBeTypeOf("number")
-								expect(stats.blockIO.write).toBeTypeOf("number")
+									// Verify stats has all required properties with correct types
+									expect(stats.cpu).toBeTypeOf("number")
+									expect(stats.memory).toBeDefined()
+									expect(stats.memory.usage).toBeTypeOf("number")
+									expect(stats.memory.limit).toBeTypeOf("number")
+									expect(stats.memory.percent).toBeTypeOf("number")
+									expect(stats.network).toBeDefined()
+									expect(stats.network.rx).toBeTypeOf("number")
+									expect(stats.network.tx).toBeTypeOf("number")
+									expect(stats.blockIO).toBeDefined()
+									expect(stats.blockIO.read).toBeTypeOf("number")
+									expect(stats.blockIO.write).toBeTypeOf("number")
 
-								statsChunks.push(stats)
+									statsChunks.push(stats)
 
-								// Collect 2 chunks then stop
-								if (statsChunks.length >= 2) {
+									// Collect 2 chunks then stop
+									if (statsChunks.length >= 2) {
+										subscription.unsubscribe()
+										resolve()
+									}
+								} else if (event.type === "started") {
+									console.log("Stream started")
+								} else if (event.type === "error" && "error" in event) {
+									console.error("Stream error:", event.error)
 									subscription.unsubscribe()
-									resolve()
+									reject(new Error(typeof event.error === "string" ? event.error : "Unknown error"))
 								}
-							} else if (event.type === "started") {
-								console.log("Stream started")
-							} else if (event.type === "error") {
-								console.error("Stream error:", event.error)
-								subscription.unsubscribe()
-								reject(new Error(event.error))
 							}
 
 							// Timeout after 5 seconds
