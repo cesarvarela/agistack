@@ -60,11 +60,11 @@ export const listContainersOperation = defineHttpOperation(
 
 						// Match patterns like "0.0.0.0:8080->80/tcp" or "80/tcp"
 						const match = trimmed.match(/(?:.*:(\d+)->)?(\d+)\/(tcp|udp)/)
-						if (match) {
+						if (match?.[2] && match[3]) {
 							portsArray.push({
 								PublicPort: match[1] ? Number.parseInt(match[1], 10) : undefined,
-								PrivatePort: Number.parseInt(match[2]!, 10),
-								Type: match[3]!,
+								PrivatePort: Number.parseInt(match[2], 10),
+								Type: match[3],
 							})
 						}
 					})

@@ -63,7 +63,7 @@ export async function* executeStreamOperation<
 export async function executeHttpOperation<
 	TInputSchema extends z.ZodType,
 	TOutputSchema extends z.ZodType,
-	TDeps = any,
+	TDeps = unknown,
 >(
 	operation: HttpOperation<TInputSchema, TOutputSchema, TDeps>,
 	input: z.infer<TInputSchema>,

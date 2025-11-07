@@ -20,8 +20,8 @@ export { defineOperation }
  * @deprecated Use defineOperation instead
  */
 export interface Action<
-	TInputSchema extends z.ZodObject<any> = z.ZodObject<any>,
-	TOutputSchema extends z.ZodObject<any> = z.ZodObject<any>,
+	TInputSchema extends z.ZodType = z.ZodType,
+	TOutputSchema extends z.ZodType = z.ZodType,
 	TInput = z.infer<TInputSchema>,
 	TOutput = z.infer<TOutputSchema>,
 > {

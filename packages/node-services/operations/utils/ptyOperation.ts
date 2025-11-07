@@ -97,7 +97,8 @@ export function createPtyStream<TInput>(
 				let chunk: string | null
 
 				if (chunks.length > 0) {
-					chunk = chunks.shift()!
+					const shiftedChunk = chunks.shift()
+					chunk = shiftedChunk ?? null
 				} else if (!finished) {
 					chunk = await new Promise<string | null>((resolve) => {
 						resolveNext = resolve

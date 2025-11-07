@@ -7,9 +7,9 @@ import { createPtyStream } from "../utils/ptyOperation"
 // Convert human-readable bytes (e.g., "100MiB", "2GiB") to numeric bytes
 function parseBytes(str: string): number {
 	const match = str.match(/^([\d.]+)\s*([A-Za-z]+)?$/)
-	if (!match) return 0
+	if (!match || !match[1]) return 0
 
-	const value = parseFloat(match[1]!)
+	const value = parseFloat(match[1])
 	const unit = (match[2] || "B").toUpperCase()
 
 	const multipliers: Record<string, number> = {
@@ -28,23 +28,26 @@ function parseBytes(str: string): number {
 }
 
 // Parse Docker stats JSON format to our typed schema
-function parseDockerStats(data: any): z.infer<typeof streamStatsMetadata.outputSchema> {
+function parseDockerStats(
+	data: Record<string, unknown>,
+): z.infer<typeof streamStatsMetadata.outputSchema> {
 	// Parse CPU percentage (e.g., "0.50%" -> 0.5)
-	const cpu = data.CPUPerc ? parseFloat(data.CPUPerc.replace("%", "")) : 0
+	const cpu = typeof data.CPUPerc === "string" ? parseFloat(data.CPUPerc.replace("%", "")) : 0
 
 	// Parse memory usage (e.g., "100MiB / 2GiB" -> {usage, limit, percent})
-	const memParts = data.MemUsage?.split(" / ") || ["0B", "0B"]
+	const memParts = typeof data.MemUsage === "string" ? data.MemUsage.split(" / ") : ["0B", "0B"]
 	const memUsage = parseBytes(memParts[0] || "0B")
 	const memLimit = parseBytes(memParts[1] || "0B")
-	const memPercent = data.MemPerc ? parseFloat(data.MemPerc.replace("%", "")) : 0
+	const memPercent =
+		typeof data.MemPerc === "string" ? parseFloat(data.MemPerc.replace("%", "")) : 0
 
 	// Parse network I/O (e.g., "1.2kB / 500B" -> {rx, tx})
-	const netParts = data.NetIO?.split(" / ") || ["0B", "0B"]
+	const netParts = typeof data.NetIO === "string" ? data.NetIO.split(" / ") : ["0B", "0B"]
 	const netRx = parseBytes(netParts[0] || "0B")
 	const netTx = parseBytes(netParts[1] || "0B")
 
 	// Parse block I/O (e.g., "1.2MB / 500kB" -> {read, write})
-	const blockParts = data.BlockIO?.split(" / ") || ["0B", "0B"]
+	const blockParts = typeof data.BlockIO === "string" ? data.BlockIO.split(" / ") : ["0B", "0B"]
 	const blockRead = parseBytes(blockParts[0] || "0B")
 	const blockWrite = parseBytes(blockParts[1] || "0B")
 

@@ -42,7 +42,9 @@ function subscriptionToAsyncGenerator<T>(
 ): AsyncGenerator<T> {
 	return (async function* () {
 		// Create a queue to bridge callback-based subscription to async generator
-		const queue: Array<{ type: "data" | "error" | "complete"; payload?: any }> = []
+		const queue: Array<
+			{ type: "data"; payload: T } | { type: "error"; payload: unknown } | { type: "complete" }
+		> = []
 		let resolveNext: ((value: boolean) => void) | null = null
 		let isComplete = false
 

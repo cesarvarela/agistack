@@ -30,11 +30,15 @@ export class NodeRegistry {
 	 * Get or create a client connection to a node
 	 */
 	getClient(nodeId: string): NodeClient {
-		if (!this.clientCache.has(nodeId)) {
-			const node = this.getNodeRecord(nodeId)
-			this.clientCache.set(nodeId, new NodeClient(node.url))
+		const cachedClient = this.clientCache.get(nodeId)
+		if (cachedClient) {
+			return cachedClient
 		}
-		return this.clientCache.get(nodeId)!
+
+		const node = this.getNodeRecord(nodeId)
+		const newClient = new NodeClient(node.url)
+		this.clientCache.set(nodeId, newClient)
+		return newClient
 	}
 
 	/**
