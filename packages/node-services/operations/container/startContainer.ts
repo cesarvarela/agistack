@@ -1,15 +1,15 @@
 import { startContainerMetadata } from "@agistack/tool-metadata/operations"
-import { defineHttpOperation } from "../types"
+import { defineOperation } from "../types"
 import { createPtyExecute } from "../utils/ptyOperation"
 
-export const startContainerOperation = defineHttpOperation(
+export const startContainerOperation = defineOperation(
 	startContainerMetadata,
 	createPtyExecute(
 		(input) => ({
 			command: "docker",
 			args: ["start", input.dockerId],
 		}),
-		(input, _stdout: string) => {
+		(input, _output) => {
 			return {
 				success: true,
 				dockerId: input.dockerId,

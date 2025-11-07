@@ -1,5 +1,6 @@
 "use client"
 
+import type { UIMessage } from "@ai-sdk/react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Select } from "@/components/ui/select"
@@ -10,29 +11,9 @@ import { MessageList } from "./message-list"
 
 export function ChatSidebar() {
 	const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
-	const [liveMessages, setLiveMessages] = useState<any[]>([])
+	const [liveMessages, setLiveMessages] = useState<UIMessage[]>([])
 	const [conversations, _setConversations] = useState<Array<{ id: string; title: string }>>([])
 	const [chatKey, setChatKey] = useState(0)
-
-	// // Load conversations list if backend supports it
-	// useEffect(() => {
-	//   let canceled = false
-	//   async function load() {
-	//     try {
-	//       // This path may not exist yet; ignore errors gracefully
-	//       const res = await api.conversations.$get().catch(() => null as any)
-	//       if (res && res.ok) {
-	//         const data = await res.json()
-	//         const list = (data?.conversations || []).map((c: any) => ({ id: c.id, title: c.title || "Untitled" }))
-	//         if (!canceled) setConversations(list)
-	//       }
-	//     } catch {}
-	//   }
-	//   load()
-	//   return () => {
-	//     canceled = true
-	//   }
-	// }, [])
 
 	return (
 		<div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground border-l">

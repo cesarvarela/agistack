@@ -12,7 +12,7 @@ interface ServerItem {
 }
 
 export function EnvironmentSelector() {
-	const { selected, ready } = useEnvironment()
+	const { selected } = useEnvironment()
 	const [mounted, setMounted] = useState(false)
 	useEffect(() => setMounted(true), [])
 	const router = useRouter()

@@ -11,6 +11,16 @@ export interface PtyOptions {
 }
 
 /**
+ * Command configuration returned by buildCommand
+ */
+export interface CommandConfig {
+	command: string
+	args: string[]
+	cwd?: string
+	env?: Record<string, string>
+}
+
+/**
  * Creates a stream function for PTY-based streaming operations
  *
  * Returns only the stream function - the operation object is constructed in the operation file.
@@ -28,7 +38,7 @@ export interface PtyOptions {
  * ```
  */
 export function createPtyStream<TInput>(
-	buildCommand: (input: TInput) => { command: string; args: string[] },
+	buildCommand: (input: TInput) => CommandConfig,
 	options: PtyOptions = {},
 ): (input: TInput, signal?: AbortSignal) => AsyncGenerator<{ output: string }> {
 	const { cols = 120, rows = 30 } = options
@@ -38,15 +48,15 @@ export function createPtyStream<TInput>(
 
 		try {
 			// Build command and arguments
-			const { command, args } = buildCommand(input)
+			const { command, args, cwd, env } = buildCommand(input)
 
 			// Create PTY process
 			ptyProcess = pty.spawn(command, args, {
 				name: "xterm-color",
 				cols,
 				rows,
-				cwd: process.cwd(),
-				env: process.env as Record<string, string>,
+				cwd: cwd || process.cwd(),
+				env: (env || process.env) as Record<string, string>,
 			})
 
 			// Create a promise-based queue for chunks
@@ -119,9 +129,18 @@ export function createPtyStream<TInput>(
 }
 
 /**
+ * Output context passed to parseOutput
+ */
+export interface OutputContext {
+	stdout: string
+	stderr: string
+	exitCode: number
+}
+
+/**
  * Creates an execute function for PTY-based JSON operations
  *
- * Spawns a PTY, collects all stdout, then parses it with the provided parser.
+ * Spawns a PTY, collects all stdout and stderr, then parses it with the provided parser.
  * Use for operations that return JSON (like `docker inspect`).
  *
  * @example
@@ -130,21 +149,21 @@ export function createPtyStream<TInput>(
  *   metadata: { name, description, inputSchema, outputSchema },
  *   execute: createPtyExecute(
  *     (input) => ({ command: "docker", args: ["inspect", input.dockerId] }),
- *     (input, stdout) => ({ dockerId: input.dockerId, inspect: JSON.parse(stdout)[0] })
+ *     (input, { stdout }) => ({ dockerId: input.dockerId, inspect: JSON.parse(stdout)[0] })
  *   )
  * }
  * ```
  */
 export function createPtyExecute<TInput, TOutput>(
-	buildCommand: (input: TInput) => { command: string; args: string[] },
-	parseOutput: (input: TInput, stdout: string) => TOutput,
+	buildCommand: (input: TInput) => CommandConfig,
+	parseOutput: (input: TInput, output: OutputContext) => TOutput,
 	options: PtyOptions = {},
 ): (input: TInput) => Promise<TOutput> {
 	const { cols = 120, rows = 30 } = options
 
 	return async (input: TInput): Promise<TOutput> => {
 		return new Promise((resolve, reject) => {
-			const { command, args } = buildCommand(input)
+			const { command, args, cwd, env } = buildCommand(input)
 			let stdout = ""
 			const stderr = ""
 
@@ -153,30 +172,28 @@ export function createPtyExecute<TInput, TOutput>(
 				name: "xterm-color",
 				cols,
 				rows,
-				cwd: process.cwd(),
-				env: process.env as Record<string, string>,
+				cwd: cwd || process.cwd(),
+				env: (env || process.env) as Record<string, string>,
 			})
 
-			// Collect stdout
+			// Collect stdout (PTY combines stdout and stderr into one stream)
+			// For true stderr separation, we'd need to spawn without PTY
+			// But PTY is needed for proper terminal emulation (colors, formatting)
 			ptyProcess.onData((data) => {
 				stdout += data
 			})
 
 			// Handle exit
 			ptyProcess.onExit(({ exitCode }) => {
-				if (exitCode === 0) {
-					try {
-						const result = parseOutput(input, stdout)
-						resolve(result)
-					} catch (error) {
-						reject(
-							new Error(
-								`Failed to parse output: ${error instanceof Error ? error.message : "Unknown error"}`,
-							),
-						)
-					}
-				} else {
-					reject(new Error(`Command failed with exit code ${exitCode}: ${stderr || stdout}`))
+				try {
+					const result = parseOutput(input, { stdout, stderr, exitCode })
+					resolve(result)
+				} catch (error) {
+					reject(
+						new Error(
+							`Failed to parse output: ${error instanceof Error ? error.message : "Unknown error"}`,
+						),
+					)
 				}
 			})
 		})

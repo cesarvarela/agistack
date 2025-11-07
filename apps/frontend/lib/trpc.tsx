@@ -4,11 +4,14 @@ import type { ControlPlaneRouter } from "@agistack/control-plane-api"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { createWSClient, wsLink } from "@trpc/client"
 import { createTRPCReact, httpBatchLink, splitLink } from "@trpc/react-query"
+import type { inferRouterInputs } from "@trpc/server"
 import { useState } from "react"
 import superjson from "superjson"
 import env from "../env-client"
 
 export const trpc = createTRPCReact<ControlPlaneRouter>()
+
+export type RouterInputs = inferRouterInputs<ControlPlaneRouter>
 
 function getUrl() {
 	const port = env.NEXT_PUBLIC_CP_PORT

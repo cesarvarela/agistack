@@ -5,6 +5,7 @@
  * Handles interactive features like tabs and action buttons
  */
 
+import type { ContainerListItem, ContainerPort } from "@agistack/tool-metadata"
 import { useIsMutating } from "@tanstack/react-query"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
@@ -14,7 +15,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUrlState } from "@/hooks/use-url-state"
-import { trpc } from "@/lib/trpc"
+import { type RouterInputs, trpc } from "@/lib/trpc"
 
 // Dynamic imports for xterm-dependent components to avoid SSR issues
 const ContainerLogs = dynamic(
@@ -29,7 +30,15 @@ const ContainerTerminal = dynamic(
 )
 
 interface ContainerDetailClientProps {
-	container: any
+	container: ContainerListItem & {
+		managedByPlatform?: boolean
+		serverId?: string
+		tags?: string[]
+		notes?: string
+		deployedBy?: string
+		internalId?: string
+		deploymentConfig?: unknown
+	}
 	serverId: string
 }
 
@@ -42,7 +51,9 @@ export function ContainerDetailClient({ container, serverId }: ContainerDetailCl
 		useIsMutating({
 			mutationKey: [["proxy", "container", "start"]],
 			predicate: (mutation) => {
-				const variables = mutation.state.variables as any
+				const variables = mutation.state.variables as
+					| RouterInputs["proxy"]["container"]["start"]
+					| undefined
 				return variables?.nodeId === serverId && variables?.dockerId === container.dockerId
 			},
 		}) > 0
@@ -51,7 +62,9 @@ export function ContainerDetailClient({ container, serverId }: ContainerDetailCl
 		useIsMutating({
 			mutationKey: [["proxy", "container", "stop"]],
 			predicate: (mutation) => {
-				const variables = mutation.state.variables as any
+				const variables = mutation.state.variables as
+					| RouterInputs["proxy"]["container"]["stop"]
+					| undefined
 				return variables?.nodeId === serverId && variables?.dockerId === container.dockerId
 			},
 		}) > 0
@@ -60,7 +73,9 @@ export function ContainerDetailClient({ container, serverId }: ContainerDetailCl
 		useIsMutating({
 			mutationKey: [["proxy", "container", "restart"]],
 			predicate: (mutation) => {
-				const variables = mutation.state.variables as any
+				const variables = mutation.state.variables as
+					| RouterInputs["proxy"]["container"]["restart"]
+					| undefined
 				return variables?.nodeId === serverId && variables?.dockerId === container.dockerId
 			},
 		}) > 0
@@ -181,7 +196,7 @@ export function ContainerDetailClient({ container, serverId }: ContainerDetailCl
 								<div>
 									<p className="text-sm font-medium text-gray-500 mb-2">Ports</p>
 									<div className="space-y-1">
-										{container.ports.map((port: any) => (
+										{container.ports.map((port: ContainerPort) => (
 											<p
 												key={`${port.PrivatePort}-${port.Type}-${port.PublicPort || "none"}`}
 												className="text-sm font-mono"

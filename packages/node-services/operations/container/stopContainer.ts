@@ -13,7 +13,7 @@ export const stopContainerOperation = defineOperation(
 				input.dockerId,
 			],
 		}),
-		(input, _stdout: string) => {
+		(input, _output) => {
 			return {
 				success: true,
 				dockerId: input.dockerId,

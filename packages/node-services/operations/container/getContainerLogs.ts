@@ -24,7 +24,7 @@ export const getContainerLogsOperation = defineOperation(
 				args,
 			}
 		},
-		(_input, stdout: string) => {
+		(_input, { stdout }) => {
 			// Split output into lines and filter out empty lines
 			const logs = stdout
 				.split("\n")

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { execMetadata } from "./operations"
 
 export const addNodeMetadata = {
 	name: "addNode" as const,
@@ -60,5 +61,50 @@ export const getNodeInfoMetadata = {
 			createdAt: z.coerce.date(),
 			updatedAt: z.coerce.date(),
 		}),
+	}),
+}
+
+export const execCommandMetadata = {
+	name: "server.execCommand" as const,
+	description: "Execute a command on a node (with whitelist validation)",
+	inputSchema: z.object({
+		nodeId: z.string().describe("The ID of the node to execute the command on"),
+		command: z.string().describe("The command to execute (e.g., 'docker', 'ls')"),
+		args: z.array(z.string()).optional().describe("Command arguments"),
+		cwd: z.string().optional().describe("Working directory for command execution"),
+		env: z.record(z.string(), z.string()).optional().describe("Environment variables"),
+	}),
+	outputSchema: execMetadata.outputSchema,
+}
+
+export const getExecutableCommandsMetadata = {
+	name: "system.getExecutableCommands" as const,
+	description: "Get list of commands available for execution on nodes",
+	inputSchema: z.object({}),
+	outputSchema: z.object({
+		allowedCommands: z.array(z.string()).describe("List of whitelisted commands"),
+	}),
+}
+
+export const getSettingsMetadata = {
+	name: "system.getSettings" as const,
+	description: "Get all system settings (UI only, not exposed to AI)",
+	inputSchema: z.object({}),
+	outputSchema: z.object({
+		allowedCommands: z.array(z.string()).describe("List of whitelisted commands"),
+	}),
+}
+
+export const updateSettingsMetadata = {
+	name: "system.updateSettings" as const,
+	description: "Update system settings (UI only, not exposed to AI)",
+	inputSchema: z.object({
+		allowedCommands: z
+			.array(z.string())
+			.min(1)
+			.describe("List of whitelisted commands for execution on nodes"),
+	}),
+	outputSchema: z.object({
+		allowedCommands: z.array(z.string()).describe("Updated list of whitelisted commands"),
 	}),
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import type { UIMessage } from "@ai-sdk/react"
 import { useChat } from "@ai-sdk/react"
 import { lastAssistantMessageIsCompleteWithToolCalls } from "ai"
 import { usePathname } from "next/navigation"
@@ -11,19 +12,17 @@ import { trpc } from "@/lib/trpc"
 
 interface ChatInputProps {
 	conversationId: string | null
-	onMessagesUpdate?: (messages: unknown[]) => void
+	onMessagesUpdate?: (messages: UIMessage[]) => void
 }
 
 export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }: ChatInputProps) {
 	const textareaRef = useRef<HTMLTextAreaElement>(null)
-	const abortControllerRef = useRef<AbortController | null>(null)
 	const [text, setText] = useState("")
-	const [sending, setSending] = useState(false)
 	const environment = useEnvironment()
 	const pathname = usePathname()
 	const trpcUtils = trpc.useContext()
 
-	const { messages, sendMessage, addToolResult } = useChat({
+	const { messages, sendMessage, addToolResult, stop, status } = useChat({
 		sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
 		onToolCall: async ({ toolCall }) => {
 			// Skip dynamic tool calls for proper type narrowing
@@ -119,6 +118,20 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 						await trpcUtils.proxy.container.inspect.invalidate()
 						break
 
+					case "getExecutableCommands":
+						output = await trpcUtils.client.actions.getExecutableCommands.query({})
+						break
+
+					case "execCommand":
+						output = await trpcUtils.client.actions.execCommand.mutate({
+							nodeId: input.nodeId,
+							command: input.command,
+							args: input.args,
+							cwd: input.cwd,
+							env: input.env,
+						})
+						break
+
 					default:
 						// Unknown tool - skip
 						return
@@ -181,43 +194,30 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 		if (!value) return
 		setText("")
 
-		// Create new AbortController for this request
-		abortControllerRef.current = new AbortController()
-
-		try {
-			setSending(true)
-			await sendMessage(
-				{
-					role: "user" as const,
-					parts: [
-						{
-							type: "text",
-							text: value,
-						},
-					],
-				} as any,
-				{
-					body: {
-						signal: abortControllerRef.current.signal,
-						context: {
-							environment: environment.selected,
-							pathname: pathname,
-						},
+		await sendMessage(
+			{
+				role: "user" as const,
+				parts: [
+					{
+						type: "text",
+						text: value,
+					},
+				],
+			},
+			{
+				body: {
+					context: {
+						environment: environment.selected,
+						pathname: pathname,
 					},
 				},
-			)
-		} finally {
-			setSending(false)
-			abortControllerRef.current = null
-		}
+			},
+		)
 	}
 
+	// Use native stop() from useChat
 	const handleStop = () => {
-		if (abortControllerRef.current) {
-			abortControllerRef.current.abort()
-			abortControllerRef.current = null
-			setSending(false)
-		}
+		stop()
 	}
 
 	return (
@@ -238,11 +238,11 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 					}}
 					onKeyDown={onKeyDown}
 					placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
-					disabled={sending}
+					disabled={status === "streaming" || status === "submitted"}
 					className="flex-1 resize-none min-h-[40px] max-h-[200px]"
 					rows={1}
 				/>
-				{sending ? (
+				{status === "streaming" || status === "submitted" ? (
 					<Button type="button" onClick={handleStop} variant="destructive" className="self-end">
 						Stop
 					</Button>
@@ -252,7 +252,7 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 					</Button>
 				)}
 			</form>
-			{sending && (
+			{(status === "streaming" || status === "submitted") && (
 				<div className="text-xs text-gray-500 dark:text-gray-400 mt-2">AI is typing...</div>
 			)}
 		</div>

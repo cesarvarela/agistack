@@ -2,10 +2,12 @@ import type { DatabaseClient } from "@agistack/db"
 import { defineOperation } from "@agistack/node-services/operations"
 import type { z } from "zod"
 import type { NodeRegistry } from "../NodeRegistry"
+import type { SettingsService } from "../SettingsService"
 
 export type ActionDependencies = {
 	db: DatabaseClient
 	nodeRegistry: NodeRegistry
+	settings: SettingsService
 }
 
 /**

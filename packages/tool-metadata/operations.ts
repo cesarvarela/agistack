@@ -147,3 +147,19 @@ export const pullImageMetadata = {
 	}),
 	cancellable: true as const,
 }
+
+export const execMetadata = {
+	name: "server.exec" as const,
+	description: "Execute a shell command on the node server",
+	inputSchema: z.object({
+		command: z.string().describe("The command to execute (e.g., 'docker', 'ls')"),
+		args: z.array(z.string()).optional().describe("Command arguments"),
+		cwd: z.string().optional().describe("Working directory for command execution"),
+		env: z.record(z.string(), z.string()).optional().describe("Environment variables"),
+	}),
+	outputSchema: z.object({
+		exitCode: z.number().describe("Command exit code"),
+		stdout: z.string().describe("Standard output"),
+		stderr: z.string().describe("Standard error output"),
+	}),
+}

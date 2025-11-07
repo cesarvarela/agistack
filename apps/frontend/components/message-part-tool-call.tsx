@@ -49,15 +49,12 @@ export function ToolCallPart({ toolName, state, args, result, error }: ToolCallP
 		<Collapsible open={isOpen} onOpenChange={setIsOpen} className="my-2">
 			<div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
 				<CollapsibleTrigger className="flex items-center gap-2 w-full hover:opacity-70 transition-opacity">
-					{hasDetails && (
-						<>
-							{isOpen ? (
-								<ChevronDown className="h-4 w-4 text-gray-500" />
-							) : (
-								<ChevronRight className="h-4 w-4 text-gray-500" />
-							)}
-						</>
-					)}
+					{hasDetails &&
+						(isOpen ? (
+							<ChevronDown className="h-4 w-4 text-gray-500" />
+						) : (
+							<ChevronRight className="h-4 w-4 text-gray-500" />
+						))}
 					<Wrench className="h-4 w-4 text-gray-500" />
 					<span className="font-mono text-sm font-medium">{toolName}</span>
 					{getStatusBadge()}

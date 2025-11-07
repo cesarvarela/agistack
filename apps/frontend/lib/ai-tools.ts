@@ -1,6 +1,8 @@
 import {
 	addNodeMetadata,
 	deleteNodeMetadata,
+	execCommandMetadata,
+	getExecutableCommandsMetadata,
 	getNodeInfoMetadata,
 	listNodesMetadata,
 } from "@agistack/tool-metadata/actions"
@@ -59,6 +61,11 @@ export function getAiTools() {
 				}),
 			),
 		}),
+
+		getExecutableCommands: tool({
+			description: getExecutableCommandsMetadata.description,
+			inputSchema: getExecutableCommandsMetadata.inputSchema,
+		}),
 	}
 
 	// Mutation tools (write operations)
@@ -101,6 +108,11 @@ export function getAiTools() {
 					nodeId: z.string().describe("The ID of the node where the container is running"),
 				}),
 			),
+		}),
+
+		execCommand: tool({
+			description: `${execCommandMetadata.description}. IMPORTANT: Call getExecutableCommands first to see which commands are available before attempting to execute.`,
+			inputSchema: execCommandMetadata.inputSchema,
 		}),
 	}
 

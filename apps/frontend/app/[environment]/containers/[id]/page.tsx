@@ -45,16 +45,15 @@ export default function ContainerDetailPage({ params }: ContainerDetailPageProps
 		state: inspect.State?.Status || "unknown",
 		status: inspect.State?.Status || "unknown",
 		ports: inspect.NetworkSettings?.Ports
-			? Object.entries(inspect.NetworkSettings.Ports)
-					.filter(([_, bindings]) => bindings)
-					.flatMap(([privatePort, bindings]) => {
-						const [port, protocol] = privatePort.split("/")
-						return bindings?.map((binding) => ({
-							PrivatePort: port,
-							PublicPort: binding?.HostPort,
-							Type: protocol,
-						}))
-					})
+			? Object.entries(inspect.NetworkSettings.Ports).flatMap(([privatePort, bindings]) => {
+					if (!bindings) return []
+					const [port, protocol] = privatePort.split("/")
+					return bindings.map((binding) => ({
+						PrivatePort: port,
+						PublicPort: binding?.HostPort,
+						Type: protocol,
+					}))
+				})
 			: [],
 		serverId,
 	}

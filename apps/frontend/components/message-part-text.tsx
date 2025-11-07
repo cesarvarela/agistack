@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 import { useState } from "react"
 import ReactMarkdown from "react-markdown"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
@@ -40,7 +41,7 @@ function LogsRenderer({ content }: { content: string }) {
 				<div className="max-h-96 overflow-auto">
 					<pre className="p-4 text-sm font-mono leading-relaxed">
 						{lines.map((line, index) => (
-							<div key={index} className="flex">
+							<div key={`${index}-${line.slice(0, 20)}`} className="flex">
 								<span
 									className="text-gray-500 select-none mr-4 text-right"
 									style={{ minWidth: "3ch" }}
@@ -63,7 +64,11 @@ export function MessagePartText({ text }: MessagePartTextProps) {
 			<ReactMarkdown
 				remarkPlugins={[remarkGfm]}
 				components={{
-					code({ className, children, ...props }: any) {
+					code({
+						className,
+						children,
+						...props
+					}: React.HTMLProps<HTMLElement> & { className?: string }) {
 						const inline = !className
 						const match = /language-(\w+)/.exec(className || "")
 						const codeContent = String(children).replace(/\n$/, "")

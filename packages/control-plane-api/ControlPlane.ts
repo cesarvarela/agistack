@@ -2,9 +2,14 @@ import type { Server } from "node:http"
 import {
 	addNode,
 	deleteNode,
+	execCommand,
+	getExecutableCommands,
 	getNodeInfo,
+	getSettings,
 	listNodes,
 	NodeRegistry,
+	SettingsService,
+	updateSettings,
 } from "@agistack/control-plane-services"
 import type { DatabaseClient } from "@agistack/db"
 import { createTRPCServerWithWebSocket } from "@agistack/node-api"
@@ -94,6 +99,7 @@ export class ControlPlane {
 	private wss: WebSocketServer | null = null
 	private port: number
 	private nodeRegistry: NodeRegistry
+	private settings: SettingsService
 
 	constructor(
 		private db: DatabaseClient,
@@ -101,11 +107,9 @@ export class ControlPlane {
 	) {
 		this.port = port
 		this.nodeRegistry = new NodeRegistry(db)
+		this.settings = new SettingsService(db)
 	}
 
-	/**
-	 * Creates the tRPC router with all operations
-	 */
 	private getRouter() {
 		return t.router({
 			// Local actions
@@ -114,14 +118,22 @@ export class ControlPlane {
 					.input(addNode.metadata.inputSchema)
 					.output(addNode.metadata.outputSchema)
 					.mutation(async ({ input }) => {
-						return await addNode.execute(input, { db: this.db, nodeRegistry: this.nodeRegistry })
+						return await addNode.execute(input, {
+							db: this.db,
+							nodeRegistry: this.nodeRegistry,
+							settings: this.settings,
+						})
 					}),
 
 				listNodes: t.procedure
 					.input(listNodes.metadata.inputSchema)
 					.output(listNodes.metadata.outputSchema)
 					.query(async ({ input }) => {
-						return await listNodes.execute(input, { db: this.db, nodeRegistry: this.nodeRegistry })
+						return await listNodes.execute(input, {
+							db: this.db,
+							nodeRegistry: this.nodeRegistry,
+							settings: this.settings,
+						})
 					}),
 
 				getNodeInfo: t.procedure
@@ -131,6 +143,7 @@ export class ControlPlane {
 						return await getNodeInfo.execute(input, {
 							db: this.db,
 							nodeRegistry: this.nodeRegistry,
+							settings: this.settings,
 						})
 					}),
 
@@ -138,7 +151,55 @@ export class ControlPlane {
 					.input(deleteNode.metadata.inputSchema)
 					.output(deleteNode.metadata.outputSchema)
 					.mutation(async ({ input }) => {
-						return await deleteNode.execute(input, { db: this.db, nodeRegistry: this.nodeRegistry })
+						return await deleteNode.execute(input, {
+							db: this.db,
+							nodeRegistry: this.nodeRegistry,
+							settings: this.settings,
+						})
+					}),
+
+				execCommand: t.procedure
+					.input(execCommand.metadata.inputSchema)
+					.output(execCommand.metadata.outputSchema)
+					.mutation(async ({ input }) => {
+						return await execCommand.execute(input, {
+							db: this.db,
+							nodeRegistry: this.nodeRegistry,
+							settings: this.settings,
+						})
+					}),
+
+				getExecutableCommands: t.procedure
+					.input(getExecutableCommands.metadata.inputSchema)
+					.output(getExecutableCommands.metadata.outputSchema)
+					.query(async ({ input }) => {
+						return await getExecutableCommands.execute(input, {
+							db: this.db,
+							nodeRegistry: this.nodeRegistry,
+							settings: this.settings,
+						})
+					}),
+
+				getSettings: t.procedure
+					.input(getSettings.metadata.inputSchema)
+					.output(getSettings.metadata.outputSchema)
+					.query(async ({ input }) => {
+						return await getSettings.execute(input, {
+							db: this.db,
+							nodeRegistry: this.nodeRegistry,
+							settings: this.settings,
+						})
+					}),
+
+				updateSettings: t.procedure
+					.input(updateSettings.metadata.inputSchema)
+					.output(updateSettings.metadata.outputSchema)
+					.mutation(async ({ input }) => {
+						return await updateSettings.execute(input, {
+							db: this.db,
+							nodeRegistry: this.nodeRegistry,
+							settings: this.settings,
+						})
 					}),
 			}),
 
@@ -268,6 +329,8 @@ export class ControlPlane {
 	}
 
 	async start() {
+		this.settings.initSettings()
+
 		const router = this.getRouter()
 
 		const { httpServer, wss } = createTRPCServerWithWebSocket({

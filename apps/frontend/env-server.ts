@@ -8,12 +8,11 @@ const schema = z.object({
 	OPENROUTER_MODEL: z.string().min(1),
 	AGENT_PORT: z.string().min(1),
 	CONTROL_PLANE_PORT: z.string().min(1),
+	NEXT_PUBLIC_CP_PORT: z.string().min(1),
 })
 
 // Skip validation during Docker build
 const env =
-	process.env.DOCKER_BUILD === "true"
-		? ({} as z.infer<typeof schema>)
-		: schema.parse(process.env)
+	process.env.DOCKER_BUILD === "true" ? ({} as z.infer<typeof schema>) : schema.parse(process.env)
 
 export default env

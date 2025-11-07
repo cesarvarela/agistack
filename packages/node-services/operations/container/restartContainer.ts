@@ -1,5 +1,5 @@
 import { restartContainerMetadata } from "@agistack/tool-metadata/operations"
-import { defineHttpOperation, defineOperation } from "../types"
+import { defineOperation } from "../types"
 import { createPtyExecute } from "../utils/ptyOperation"
 
 export const restartContainerOperation = defineOperation(
@@ -13,7 +13,7 @@ export const restartContainerOperation = defineOperation(
 				input.dockerId,
 			],
 		}),
-		(input, _stdout: string) => {
+		(input, _output) => {
 			return {
 				success: true,
 				dockerId: input.dockerId,

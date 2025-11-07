@@ -65,6 +65,19 @@ export const messages = sqliteTable("messages", {
 		.$defaultFn(() => new Date()),
 })
 
+export const settings = sqliteTable("settings", {
+	id: integer("id")
+		.primaryKey({ autoIncrement: false })
+		.$default(() => 1),
+	allowedCommands: text("allowed_commands", { mode: "json" })
+		.$type<string[]>()
+		.notNull()
+		.$default(() => ["docker", "ls", "cat", "grep", "ps", "df", "du", "pwd", "whoami", "uname"]),
+	updatedAt: integer("updated_at", { mode: "timestamp" })
+		.notNull()
+		.$defaultFn(() => new Date()),
+})
+
 export const nodesRelations = relations(nodes, ({ many }) => ({ containers: many(containers) }))
 export const containersRelations = relations(containers, ({ one }) => ({
 	node: one(nodes, { fields: [containers.nodeId], references: [nodes.id] }),
@@ -87,3 +100,5 @@ export type Conversation = typeof conversations.$inferSelect
 export type NewConversation = typeof conversations.$inferInsert
 export type Message = typeof messages.$inferSelect
 export type NewMessage = typeof messages.$inferInsert
+export type Settings = typeof settings.$inferSelect
+export type NewSettings = typeof settings.$inferInsert

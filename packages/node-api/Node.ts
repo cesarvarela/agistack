@@ -1,5 +1,6 @@
 import type { Server } from "node:http"
 import {
+	execOperation,
 	getContainerLogsOperation,
 	inspectContainerOperation,
 	listContainersOperation,
@@ -79,6 +80,13 @@ export class Node {
 				pullImage: t.procedure
 					.input(pullImageOperation.metadata.inputSchema)
 					.subscription(({ input }) => executeStreamOperation(pullImageOperation, input)),
+			}),
+
+			server: t.router({
+				exec: t.procedure
+					.input(execOperation.metadata.inputSchema)
+					.output(execOperation.metadata.outputSchema)
+					.mutation(({ input }) => executeHttpOperation(execOperation, input)),
 			}),
 		})
 	}

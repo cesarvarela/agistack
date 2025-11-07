@@ -9,7 +9,7 @@ export const inspectContainerOperation = defineHttpOperation(
 			command: "docker",
 			args: ["inspect", input.dockerId],
 		}),
-		(input, stdout: string) => {
+		(input, { stdout }) => {
 			// docker inspect returns an array, even for single containers
 			const inspectArray = JSON.parse(stdout)
 			const containerData = inspectArray[0]

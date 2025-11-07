@@ -24,7 +24,7 @@ export const listContainersOperation = defineHttpOperation(
 			command: "docker",
 			args: ["ps", "-a", "--format", "{{json .}}"],
 		}),
-		(input, stdout: string) => {
+		(input, { stdout }) => {
 			const dockerContainers: DockerContainerRaw[] = stdout
 				.trim()
 				.split("\n")
