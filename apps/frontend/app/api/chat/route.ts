@@ -7,6 +7,7 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import { convertToModelMessages, stepCountIs, streamText } from "ai"
 import { getAiTools } from "@/lib/ai-tools"
+import env from "../../../env-server"
 import { systemPrompt } from "./system-prompt"
 
 interface ChatContext {
@@ -40,7 +41,7 @@ Use this context to provide more relevant responses. Default to the current envi
 
 // Initialize OpenRouter provider
 const openrouter = createOpenRouter({
-	apiKey: process.env.OPENROUTER_API_KEY,
+	apiKey: env.OPENROUTER_API_KEY,
 })
 
 export async function POST(req: Request) {
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
 		const contextualPrompt = buildSystemPrompt(context)
 
 		const result = streamText({
-			model: openrouter("anthropic/claude-haiku-4.5"),
+			model: openrouter(env.OPENROUTER_MODEL),
 			system: contextualPrompt,
 			messages: convertToModelMessages(messages),
 			// Allow up to 15 steps for multi-step workflows (query → action → verify)

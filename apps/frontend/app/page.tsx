@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { trpc } from "@/lib/trpc"
 import { AddServerButton } from "@/components/add-server-button"
+import { trpc } from "@/lib/trpc"
 
 export default function Home() {
 	const { data, isLoading } = trpc.actions.listNodes.useQuery({})

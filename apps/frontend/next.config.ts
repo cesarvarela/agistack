@@ -1,4 +1,5 @@
 import type { NextConfig } from "next"
+import "env-server"
 
 const nextConfig: NextConfig = {
 	// Transpile packages from the monorepo

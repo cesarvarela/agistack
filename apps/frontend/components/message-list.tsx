@@ -2,8 +2,8 @@
 
 import type { UIMessage } from "@ai-sdk/react"
 import { useEffect, useRef } from "react"
-import { MessagePartText } from "./message-part-text"
 import { ReasoningPart } from "./message-part-reasoning"
+import { MessagePartText } from "./message-part-text"
 import { ToolCallPart } from "./message-part-tool-call"
 
 interface MessageListProps {
@@ -48,12 +48,7 @@ export function MessageList({ messages = [] }: MessageListProps) {
 						{message.parts?.map((part, index) => {
 							// Text part
 							if (part.type === "text") {
-								return (
-									<MessagePartText
-										key={`${message.id}-text-${index}`}
-										text={part.text}
-									/>
-								)
+								return <MessagePartText key={`${message.id}-text-${index}`} text={part.text} />
 							}
 
 							// Reasoning part (thinking)

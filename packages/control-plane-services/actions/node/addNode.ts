@@ -4,6 +4,14 @@ import { addNodeMetadata } from "@agistack/tool-metadata/actions"
 import { nanoid } from "nanoid"
 import type { ActionDependencies } from "../types"
 
+/**
+ * Normalizes a URL to always use HTTP/HTTPS protocol
+ * Converts ws:// to http:// and wss:// to https://
+ */
+function normalizeNodeUrl(url: string): string {
+	return url.replace(/^ws:\/\//, "http://").replace(/^wss:\/\//, "https://")
+}
+
 export const addNode = defineOperation<
 	typeof addNodeMetadata.inputSchema,
 	typeof addNodeMetadata.outputSchema,
@@ -14,7 +22,7 @@ export const addNode = defineOperation<
 	const newNode: NewDBNode = {
 		id: nanoid(),
 		name: input.name,
-		url: input.url,
+		url: normalizeNodeUrl(input.url),
 	}
 
 	const insertedNode = deps.db.insert(nodes).values(newNode).returning().get() as DBNode

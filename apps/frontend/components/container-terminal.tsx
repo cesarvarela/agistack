@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select } from "@/components/ui/select"
 import "@xterm/xterm/css/xterm.css"
+import env from "../env-client"
 
 interface ContainerTerminalProps {
 	containerId: string
@@ -81,8 +82,9 @@ export function ContainerTerminal({ containerId, serverId }: ContainerTerminalPr
 		const terminal = xtermRef.current
 		terminal.clear()
 
-		// Get Control Plane URL and construct WebSocket URL
-		const cpUrl = process.env.NEXT_PUBLIC_CP_URL || "http://localhost:4002"
+		// Get Control Plane port and construct WebSocket URL
+		const cpPort = env.NEXT_PUBLIC_CP_PORT
+		const cpUrl = `http://localhost:${cpPort}`
 		const wsUrl = cpUrl.replace("http://", "ws://").replace("https://", "wss://")
 
 		// Create WebSocket connection with query parameters

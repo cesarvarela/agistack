@@ -72,7 +72,7 @@ export function setupTerminalWebSocketProxy(
 			nodeWs.on("message", (data) => {
 				nodeToClientCount++
 				const dataLength = data instanceof ArrayBuffer ? data.byteLength : data.length
-			console.log(`[Proxy][${proxyId}] Node->Client #${nodeToClientCount}: ${dataLength} bytes`)
+				console.log(`[Proxy][${proxyId}] Node->Client #${nodeToClientCount}: ${dataLength} bytes`)
 
 				if (clientWs.readyState === WebSocket.OPEN) {
 					clientWs.send(data)
@@ -83,7 +83,8 @@ export function setupTerminalWebSocketProxy(
 			clientWs.on("message", (data) => {
 				clientToNodeCount++
 				const dataLength = data instanceof ArrayBuffer ? data.byteLength : data.length
-				const preview = data instanceof ArrayBuffer ? "[ArrayBuffer]" : data.toString().substring(0, 50)
+				const preview =
+					data instanceof ArrayBuffer ? "[ArrayBuffer]" : data.toString().substring(0, 50)
 				console.log(
 					`[Proxy][${proxyId}] Client->Node #${clientToNodeCount}: ${dataLength} bytes: ${JSON.stringify(preview)}`,
 				)

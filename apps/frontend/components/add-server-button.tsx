@@ -15,7 +15,7 @@ import { trpc } from "@/lib/trpc"
 export function AddServerButton() {
 	const [open, setOpen] = useState(false)
 	const [name, setName] = useState("Test Node")
-	const [url, setUrl] = useState("http://localhost:4001")
+	const [url, setUrl] = useState("")
 	const [error, setError] = useState<string | null>(null)
 
 	const utils = trpc.useContext()

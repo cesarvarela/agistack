@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Allotment } from "allotment"
+import { useEffect, useState } from "react"
 import "allotment/dist/style.css"
 import { PanelRight } from "lucide-react"
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import { EnvironmentProvider } from "@/context/environment-context"
 import { AppSidebar } from "@/components/app-sidebar"
+import { Button } from "@/components/ui/button"
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { EnvironmentProvider } from "@/context/environment-context"
 import { ChatSidebar } from "./chat-sidebar"
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {

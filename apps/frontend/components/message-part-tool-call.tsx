@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronDown, ChevronRight, Loader2, CheckCircle2, XCircle, Wrench } from "lucide-react"
+import { CheckCircle2, ChevronDown, ChevronRight, Loader2, Wrench, XCircle } from "lucide-react"
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -42,7 +42,8 @@ export function ToolCallPart({ toolName, state, args, result, error }: ToolCallP
 		)
 	}
 
-	const hasDetails = (args && Object.keys(args).length > 0) || error || (result !== undefined && !error)
+	const hasDetails =
+		(args && Object.keys(args).length > 0) || error || (result !== undefined && !error)
 
 	return (
 		<Collapsible open={isOpen} onOpenChange={setIsOpen} className="my-2">

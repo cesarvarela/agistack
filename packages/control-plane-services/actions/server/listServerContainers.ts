@@ -11,7 +11,11 @@ export const inputSchema = z.intersection(
 
 export const outputSchema = listContainersOperation.metadata.outputSchema
 
-export const listServerContainers = defineOperation<typeof inputSchema, typeof outputSchema, ActionDependencies>(
+export const listServerContainers = defineOperation<
+	typeof inputSchema,
+	typeof outputSchema,
+	ActionDependencies
+>(
 	{
 		name: "listServerContainers" as const,
 		description:

@@ -1,18 +1,18 @@
 "use client"
 
+import { Box, Home, LayoutDashboard, Settings } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, LayoutDashboard, Box, Settings } from "lucide-react"
 import {
 	Sidebar,
 	SidebarContent,
 	SidebarGroup,
-	SidebarGroupLabel,
 	SidebarGroupContent,
-	SidebarMenu,
-	SidebarMenuItem,
-	SidebarMenuButton,
+	SidebarGroupLabel,
 	SidebarHeader,
+	SidebarMenu,
+	SidebarMenuButton,
+	SidebarMenuItem,
 	SidebarRail,
 } from "@/components/ui/sidebar"
 import { useEnvironment } from "@/context/environment-context"

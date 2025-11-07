@@ -26,7 +26,7 @@ export class Node {
 	private wss: WebSocketServer | null = null
 	private port: number
 
-	constructor(port = 4001) {
+	constructor(port: number) {
 		this.port = port
 	}
 

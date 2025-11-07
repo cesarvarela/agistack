@@ -12,7 +12,9 @@
 		"format:check": "biome check --formatter ."
 	},
 	"dependencies": {
-		"@agistack/node-api": "workspace:*"
+		"@agistack/node-api": "workspace:*",
+		"dotenv": "^17.2.3",
+		"zod": "^4.1.12"
 	},
 	"devDependencies": {
 		"@agistack/typescript-config": "workspace:*",

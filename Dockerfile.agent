@@ -48,15 +48,12 @@ COPY --from=builder /app/packages/tool-metadata ./packages/tool-metadata
 COPY --from=builder /app/packages/typescript-config ./packages/typescript-config
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
 
-# Expose agent port
-EXPOSE 4001
-
 # Set environment variables
 ENV NODE_ENV=production
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
-  CMD node -e "require('http').get('http://localhost:4001', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"
+  CMD node -e "require('http').get('http://localhost:${PORT}', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"
 
 # Use tini as entrypoint for proper signal handling
 ENTRYPOINT ["/sbin/tini", "--"]

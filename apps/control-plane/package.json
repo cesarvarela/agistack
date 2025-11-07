@@ -8,9 +8,13 @@
 		"check-types": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@agistack/typescript-config": "workspace:*",
 		"@agistack/control-plane-api": "workspace:*",
+		"@agistack/control-plane-services": "workspace:*",
 		"@agistack/db": "workspace:*",
-		"@agistack/control-plane-services": "workspace:*"
+		"@agistack/typescript-config": "workspace:*",
+		"@trpc/client": "^11.7.1",
+		"dotenv": "^17.2.3",
+		"superjson": "^2.2.2",
+		"zod": "^4.1.12"
 	}
 }

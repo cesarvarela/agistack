@@ -20,11 +20,7 @@ export function ReasoningPart({ content, streaming = false }: ReasoningPartProps
 	return (
 		<Collapsible open={isOpen} onOpenChange={setIsOpen} className="my-2">
 			<CollapsibleTrigger className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-				{isOpen ? (
-					<ChevronDown className="h-4 w-4" />
-				) : (
-					<ChevronRight className="h-4 w-4" />
-				)}
+				{isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
 				<span className="font-medium">
 					{streaming ? "Reasoning..." : "Reasoned for a few seconds"}
 				</span>

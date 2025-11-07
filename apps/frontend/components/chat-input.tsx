@@ -2,8 +2,8 @@
 
 import { useChat } from "@ai-sdk/react"
 import { lastAssistantMessageIsCompleteWithToolCalls } from "ai"
-import { useCallback, useEffect, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useEnvironment } from "@/context/environment-context"
@@ -143,11 +143,15 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 	})
 
 	// Bubble messages up to parent for live display when no conversation selected
-	useEffect(() => {
+	const handleMessagesUpdate = useCallback(() => {
 		if (onMessagesUpdate) {
 			onMessagesUpdate(messages)
 		}
 	}, [messages, onMessagesUpdate])
+
+	useEffect(() => {
+		handleMessagesUpdate()
+	}, [handleMessagesUpdate])
 
 	// Adjust textarea height
 	const adjustTextareaHeight = useCallback(() => {
@@ -200,7 +204,7 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 							pathname: pathname,
 						},
 					},
-				}
+				},
 			)
 		} finally {
 			setSending(false)
@@ -239,12 +243,7 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 					rows={1}
 				/>
 				{sending ? (
-					<Button
-						type="button"
-						onClick={handleStop}
-						variant="destructive"
-						className="self-end"
-					>
+					<Button type="button" onClick={handleStop} variant="destructive" className="self-end">
 						Stop
 					</Button>
 				) : (

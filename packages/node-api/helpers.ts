@@ -11,7 +11,7 @@ import * as pty from "node-pty"
 import superjson from "superjson"
 import type { WebSocket } from "ws"
 import { WebSocketServer } from "ws"
-import { z } from "zod"
+import type { z } from "zod"
 
 /**
  * Generic helper for executing stream operations with standardized event wrapping

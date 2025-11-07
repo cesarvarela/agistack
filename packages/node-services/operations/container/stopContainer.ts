@@ -1,8 +1,8 @@
 import { stopContainerMetadata } from "@agistack/tool-metadata/operations"
-import { defineHttpOperation } from "../types"
+import { defineOperation } from "../types"
 import { createPtyExecute } from "../utils/ptyOperation"
 
-export const stopContainerOperation = defineHttpOperation(
+export const stopContainerOperation = defineOperation(
 	stopContainerMetadata,
 	createPtyExecute(
 		(input) => ({
