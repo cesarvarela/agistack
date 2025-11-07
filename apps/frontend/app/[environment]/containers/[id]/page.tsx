@@ -5,6 +5,7 @@
  * Shows container information with tabs for Overview, Logs, Stats, and Config
  */
 
+import type { DockerPortBinding } from "@agistack/tool-metadata"
 import { notFound } from "next/navigation"
 import { use } from "react"
 import { trpc } from "@/lib/trpc"
@@ -48,13 +49,16 @@ export default function ContainerDetailPage({ params }: ContainerDetailPageProps
 			? Object.entries(inspect.NetworkSettings.Ports).flatMap(([privatePort, bindings]) => {
 					if (!bindings) return []
 					const [port, protocol] = privatePort.split("/")
-					return bindings.map((binding) => ({
-						PrivatePort: port,
-						PublicPort: binding?.HostPort,
+					if (!port || !protocol) return []
+					return (bindings as DockerPortBinding[]).map((binding) => ({
+						PrivatePort: Number.parseInt(port, 10),
+						PublicPort: binding?.HostPort ? Number.parseInt(binding.HostPort, 10) : undefined,
 						Type: protocol,
 					}))
 				})
 			: [],
+		created: inspect.Created ? new Date(inspect.Created).getTime() : Date.now(),
+		labels: inspect.Config?.Labels || {},
 		serverId,
 	}
 

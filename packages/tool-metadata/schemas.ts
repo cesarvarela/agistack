@@ -5,9 +5,11 @@ import { z } from "zod"
  */
 export const dockerInspectSchema = z.object({
 	Name: z.string().optional(),
+	Created: z.string().optional(),
 	Config: z
 		.object({
 			Image: z.string().optional(),
+			Labels: z.record(z.string(), z.string()).optional(),
 		})
 		.optional(),
 	State: z
@@ -35,6 +37,14 @@ export const dockerInspectSchema = z.object({
 })
 
 export type DockerInspectInfo = z.infer<typeof dockerInspectSchema>
+
+/**
+ * Docker port binding from inspect output
+ */
+export type DockerPortBinding = {
+	HostIp?: string
+	HostPort?: string
+}
 
 /**
  * Parsed port mapping for containers

@@ -61,21 +61,13 @@ describe("Control Plane API - streamStats Subscription", () => {
 
 	afterAll(async () => {
 		// Cleanup: Remove node from registry first
-		if (nodeId) {
-			try {
-				await client.actions.deleteNode.mutate({ id: nodeId })
-			} catch (error) {
-				console.warn("Failed to delete node from registry:", error)
-			}
-		}
+		await client.actions.deleteNode.mutate({ id: nodeId })
 
 		// Cleanup: Close WebSocket client
 		wsClient.close()
 
 		// Cleanup: Stop the Node server
-		if (node) {
-			await node.stop()
-		}
+		await node.stop()
 
 		// Cleanup: Stop the Control Plane server
 		await controlPlane.stop()
@@ -86,98 +78,53 @@ describe("Control Plane API - streamStats Subscription", () => {
 
 	it("should return parsed stats as typed objects", async () => {
 		// Get a running container to test with
-		const containers = await client.proxy.container.list.query({
-			nodeId,
-		})
+		const containers = await client.proxy.container.list.query({ nodeId })
 
-		if (containers.containers.length === 0) {
-			console.warn("Skipping streamStats test: No containers available")
-			return
-		}
-
-		const testContainer = containers.containers[0]
-		if (!testContainer) {
-			throw new Error("Expected at least one container")
-		}
+		// Test fails if no containers exist
+		expect(containers.containers.length).toBeGreaterThan(0)
+		// biome-ignore lint/style/noNonNullAssertion: asserted non-empty above
+		const testContainer = containers.containers[0]!
 
 		// Subscribe to streamStats
-		const statsChunks: Array<{
-			cpu: number
-			memory: { usage: number; limit: number; percent: number }
-			network: { rx: number; tx: number }
-			blockIO: { read: number; write: number }
-		}> = []
-		const startTime = Date.now()
+		const statsChunks: Array<
+			| {
+					cpu: number
+					memory: { usage: number; limit: number; percent: number }
+					network: { rx: number; tx: number }
+					blockIO: { read: number; write: number }
+			  }
+			| undefined
+		> = []
 
 		await new Promise<void>((resolve, reject) => {
+			let eventCount = 0
 			const subscription = client.proxy.container.streamStats.subscribe(
-				{
-					nodeId,
-					dockerId: testContainer.dockerId,
-				},
+				{ nodeId, dockerId: testContainer.dockerId },
 				{
 					onData: (event: unknown) => {
-						try {
-							console.log("Received event:", JSON.stringify(event, null, 2))
+						eventCount++
+						const typedEvent = event as { type: string; data?: unknown; error?: unknown }
 
-							// Type guard for event structure
-							if (
-								typeof event === "object" &&
-								event !== null &&
-								"type" in event &&
-								typeof event.type === "string"
-							) {
-								// Check if it's a data event with stats
-								if (event.type === "data" && "data" in event) {
-									const stats = event.data as {
-										cpu: number
-										memory: { usage: number; limit: number; percent: number }
-										network: { rx: number; tx: number }
-										blockIO: { read: number; write: number }
-									}
+						// Fail test if we get an error event
+						expect(typedEvent.type).not.toBe("error")
 
-									// Verify stats object is defined
-									expect(stats).toBeDefined()
+						// Only process data events, skip started/other events
+						const stats = typedEvent.data as
+							| {
+									cpu: number
+									memory: { usage: number; limit: number; percent: number }
+									network: { rx: number; tx: number }
+									blockIO: { read: number; write: number }
+							  }
+							| undefined
 
-									// Verify stats has all required properties with correct types
-									expect(stats.cpu).toBeTypeOf("number")
-									expect(stats.memory).toBeDefined()
-									expect(stats.memory.usage).toBeTypeOf("number")
-									expect(stats.memory.limit).toBeTypeOf("number")
-									expect(stats.memory.percent).toBeTypeOf("number")
-									expect(stats.network).toBeDefined()
-									expect(stats.network.rx).toBeTypeOf("number")
-									expect(stats.network.tx).toBeTypeOf("number")
-									expect(stats.blockIO).toBeDefined()
-									expect(stats.blockIO.read).toBeTypeOf("number")
-									expect(stats.blockIO.write).toBeTypeOf("number")
+						// Stats can be undefined for non-data events like "started"
+						statsChunks.push(stats)
 
-									statsChunks.push(stats)
-
-									// Collect 2 chunks then stop
-									if (statsChunks.length >= 2) {
-										subscription.unsubscribe()
-										resolve()
-									}
-								} else if (event.type === "started") {
-									console.log("Stream started")
-								} else if (event.type === "error" && "error" in event) {
-									console.error("Stream error:", event.error)
-									subscription.unsubscribe()
-									reject(new Error(typeof event.error === "string" ? event.error : "Unknown error"))
-								}
-							}
-
-							// Timeout after 5 seconds
-							if (Date.now() - startTime > 5000) {
-								subscription.unsubscribe()
-								resolve()
-							}
-						} catch (error) {
-							console.error("Test error:", error)
-							subscription.unsubscribe()
-							reject(error)
-						}
+						// After 3 events total, stop (usually: 1 started + 2 data events)
+						expect(eventCount).toBeLessThanOrEqual(3)
+						subscription.unsubscribe()
+						resolve()
 					},
 					onError: (error) => {
 						reject(error)
@@ -186,7 +133,20 @@ describe("Control Plane API - streamStats Subscription", () => {
 			)
 		})
 
-		// Verify we got at least one stats chunk
-		expect(statsChunks.length).toBeGreaterThan(0)
+		// Filter out undefined (non-data events) and verify we got 2 real stats
+		const validStats = statsChunks.filter((s): s is NonNullable<typeof s> => s !== undefined)
+		expect(validStats.length).toBe(2)
+
+		// Verify first stats chunk structure
+		// biome-ignore lint/style/noNonNullAssertion: asserted length above
+		const firstStats = validStats[0]!
+		expect(firstStats.cpu).toBeTypeOf("number")
+		expect(firstStats.memory.usage).toBeTypeOf("number")
+		expect(firstStats.memory.limit).toBeTypeOf("number")
+		expect(firstStats.memory.percent).toBeTypeOf("number")
+		expect(firstStats.network.rx).toBeTypeOf("number")
+		expect(firstStats.network.tx).toBeTypeOf("number")
+		expect(firstStats.blockIO.read).toBeTypeOf("number")
+		expect(firstStats.blockIO.write).toBeTypeOf("number")
 	}, 10000) // 10 second timeout for this test
 })

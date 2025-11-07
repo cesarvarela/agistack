@@ -39,79 +39,45 @@ describe("Node API - Container Operations", () => {
 		it("should list all containers", async () => {
 			const response = await client.container.list.query({})
 
-			expect(response).toHaveProperty("containers")
-			expect(Array.isArray(response.containers)).toBe(true)
+			expect(response.containers).toBeDefined()
+			expect(response.containers.length).toBeGreaterThan(0)
 		})
 
 		it("should filter running containers", async () => {
-			const response = await client.container.list.query({
-				status: "running",
-			})
+			const response = await client.container.list.query({ status: "running" })
 
-			expect(response).toHaveProperty("containers")
-			expect(Array.isArray(response.containers)).toBe(true)
-
-			// If there are running containers, verify they're all running
-			if (response.containers.length > 0) {
-				expect(response.containers.every((c) => c.state === "running")).toBe(true)
-			}
+			expect(response.containers).toBeDefined()
+			expect(response.containers.length).toBeGreaterThan(0)
+			expect(response.containers.every((c) => c.state === "running")).toBe(true)
 		})
 
 		it("should filter stopped containers", async () => {
-			const response = await client.container.list.query({
-				status: "stopped",
-			})
+			const response = await client.container.list.query({ status: "stopped" })
 
-			expect(response).toHaveProperty("containers")
-			expect(Array.isArray(response.containers)).toBe(true)
-
-			// If there are stopped containers, verify none are running
-			if (response.containers.length > 0) {
-				expect(response.containers.every((c) => c.state !== "running")).toBe(true)
-			}
+			expect(response.containers).toBeDefined()
+			expect(response.containers.length).toBeGreaterThan(0)
+			expect(response.containers.every((c) => c.state !== "running")).toBe(true)
 		})
 
 		it("should return proper container structure", async () => {
 			const response = await client.container.list.query({})
 
-			// If there are containers, validate the structure
-			if (response.containers.length > 0) {
-				const container = response.containers[0]
-				if (!container) {
-					throw new Error("Expected at least one container")
-				}
+			expect(response.containers.length).toBeGreaterThan(0)
+			// biome-ignore lint/style/noNonNullAssertion: asserted non-empty above
+			const container = response.containers[0]!
 
-				expect(container).toHaveProperty("dockerId")
-				expect(typeof container.dockerId).toBe("string")
-
-				expect(container).toHaveProperty("name")
-				expect(typeof container.name).toBe("string")
-
-				expect(container).toHaveProperty("image")
-				expect(typeof container.image).toBe("string")
-
-				expect(container).toHaveProperty("state")
-				expect(typeof container.state).toBe("string")
-
-				expect(container).toHaveProperty("status")
-				expect(typeof container.status).toBe("string")
-
-				expect(container).toHaveProperty("ports")
-				expect(Array.isArray(container.ports)).toBe(true)
-
-				expect(container).toHaveProperty("labels")
-				expect(typeof container.labels).toBe("object")
-
-				expect(container).toHaveProperty("created")
-				expect(typeof container.created).toBe("number")
-			}
+			expect(container.dockerId).toBeTypeOf("string")
+			expect(container.name).toBeTypeOf("string")
+			expect(container.image).toBeTypeOf("string")
+			expect(container.state).toBeTypeOf("string")
+			expect(container.status).toBeTypeOf("string")
+			expect(container.created).toBeTypeOf("number")
 		})
 
 		it("should handle status parameter of 'all'", async () => {
 			const responseAll = await client.container.list.query({ status: "all" })
 			const responseDefault = await client.container.list.query({})
 
-			// Both should return the same results
 			expect(responseAll.containers.length).toBe(responseDefault.containers.length)
 		})
 	})

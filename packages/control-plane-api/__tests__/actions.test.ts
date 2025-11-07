@@ -52,10 +52,7 @@ describe("Control Plane API - Actions", () => {
 				url: "http://localhost:4001",
 			})
 
-			// Type inference is now working - response.node is properly typed!
-			expect(response).toHaveProperty("node")
-			expect(response.node).toHaveProperty("id")
-			expect(typeof response.node.id).toBe("string")
+			expect(response.node.id).toBeTypeOf("string")
 			expect(response.node.name).toBe("test-node")
 			expect(response.node.url).toBe("http://localhost:4001")
 		})
@@ -82,22 +79,9 @@ describe("Control Plane API - Actions", () => {
 				url: "http://localhost:4005",
 			})
 
-			const { node } = response
-
-			// Validate all expected fields exist
-			expect(node).toHaveProperty("id")
-			expect(node).toHaveProperty("name")
-			expect(node).toHaveProperty("url")
-
-			// Validate field types
-			expect(typeof node.id).toBe("string")
-			expect(typeof node.name).toBe("string")
-			expect(typeof node.url).toBe("string")
-
-			// Validate values
-			expect(node.id.length).toBeGreaterThan(0)
-			expect(node.name).toBe("complete-node")
-			expect(node.url).toBe("http://localhost:4005")
+			expect(response.node.id.length).toBeGreaterThan(0)
+			expect(response.node.name).toBe("complete-node")
+			expect(response.node.url).toBe("http://localhost:4005")
 		})
 	})
 })
