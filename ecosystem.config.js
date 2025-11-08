@@ -14,8 +14,6 @@ module.exports = {
 				OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
 				OPENROUTER_MODEL: process.env.OPENROUTER_MODEL,
 			},
-			error_file: "/dev/stderr",
-			out_file: "/dev/stdout",
 			time: true,
 		},
 		{
@@ -32,8 +30,6 @@ module.exports = {
 				AGENT_PORT: "14001",
 				CONTROL_PLANE_PORT: "14002",
 			},
-			error_file: "/dev/stderr",
-			out_file: "/dev/stdout",
 			time: true,
 		},
 		{
@@ -46,8 +42,6 @@ module.exports = {
 				PORT: "14001",
 				AGENT_PORT: "14001",
 			},
-			error_file: "/dev/stderr",
-			out_file: "/dev/stdout",
 			time: true,
 		},
 	],
