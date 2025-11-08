@@ -28,8 +28,8 @@ RUN HUSKY=0 pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build Next.js frontend with DOCKER_BUILD flag to skip env validation
-RUN cd apps/frontend && DOCKER_BUILD=true pnpm build
+# Build Next.js frontend with hardcoded control plane port
+RUN cd apps/frontend && NEXT_PUBLIC_CP_PORT=14002 pnpm build
 
 # Production stage
 FROM node:20
@@ -45,6 +45,7 @@ COPY --from=builder /app ./
 
 # Create data directory for SQLite database
 RUN mkdir -p /app/data
+VOLUME /app/data
 
 # Copy PM2 ecosystem config and entrypoint script
 COPY ecosystem.config.js ./
@@ -58,6 +59,6 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
-  CMD node -e "require('http').get('http://localhost:${FRONTEND_PORT}', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"
+  CMD node -e "require('http').get('http://localhost:3000', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"
 
 ENTRYPOINT ["./entrypoint.sh"]

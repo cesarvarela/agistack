@@ -1,20 +1,16 @@
 services:
   agistack:
-    image: ghcr.io/agistack/agistack:latest
+    image: ghcr.io/cesarvarela/agistack:latest
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
       - agistack-data:/app/data
     environment:
-      DATABASE_PATH: /app/data/db.sqlite
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       OPENROUTER_MODEL: ${OPENROUTER_MODEL:-anthropic/claude-3.5-sonnet}
-      FRONTEND_PORT: ${FRONTEND_PORT:-3000}
-      CONTROL_PLANE_PORT: ${CONTROL_PLANE_PORT:-14002}
-      AGENT_PORT: ${AGENT_PORT:-14001}
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - "3000:3000"
     restart: unless-stopped
 
 volumes:
