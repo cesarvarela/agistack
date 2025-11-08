@@ -7,9 +7,6 @@ import {
 	listNodesMetadata,
 } from "@agistack/tool-metadata/actions"
 import {
-	getContainerLogsMetadata,
-	inspectContainerMetadata,
-	listContainersMetadata,
 	restartContainerMetadata,
 	startContainerMetadata,
 	stopContainerMetadata,
@@ -32,34 +29,6 @@ export function getAiTools() {
 		getNodeInfo: tool({
 			description: getNodeInfoMetadata.description,
 			inputSchema: getNodeInfoMetadata.inputSchema,
-		}),
-
-		listContainers: tool({
-			description: listContainersMetadata.description,
-			inputSchema: z.intersection(
-				listContainersMetadata.inputSchema,
-				z.object({ nodeId: z.string().describe("The ID of the node to query containers from") }),
-			),
-		}),
-
-		inspectContainer: tool({
-			description: inspectContainerMetadata.description,
-			inputSchema: z.intersection(
-				inspectContainerMetadata.inputSchema,
-				z.object({
-					nodeId: z.string().describe("The ID of the node where the container is running"),
-				}),
-			),
-		}),
-
-		getContainerLogs: tool({
-			description: getContainerLogsMetadata.description,
-			inputSchema: z.intersection(
-				getContainerLogsMetadata.inputSchema,
-				z.object({
-					nodeId: z.string().describe("The ID of the node where the container is running"),
-				}),
-			),
 		}),
 
 		getExecutableCommands: tool({
