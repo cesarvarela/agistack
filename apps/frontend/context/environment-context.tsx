@@ -5,14 +5,25 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react"
 
 type EnvId = string | null
 
+export interface RuntimeConfig {
+	controlPlanePort: string
+}
+
 interface EnvironmentContextValue {
 	selected: EnvId
 	ready: boolean
+	runtimeConfig: RuntimeConfig
 }
 
 const EnvironmentContext = createContext<EnvironmentContextValue | undefined>(undefined)
 
-export function EnvironmentProvider({ children }: { children: React.ReactNode }) {
+export function EnvironmentProvider({
+	children,
+	runtimeConfig,
+}: {
+	children: React.ReactNode
+	runtimeConfig: RuntimeConfig
+}) {
 	const [selected, setSelected] = useState<EnvId>(null)
 	const [ready, setReady] = useState(false)
 
@@ -41,7 +52,10 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
 		setReady(true)
 	}, [pathname])
 
-	const value = useMemo<EnvironmentContextValue>(() => ({ selected, ready }), [selected, ready])
+	const value = useMemo<EnvironmentContextValue>(
+		() => ({ selected, ready, runtimeConfig }),
+		[selected, ready, runtimeConfig],
+	)
 
 	return <EnvironmentContext.Provider value={value}>{children}</EnvironmentContext.Provider>
 }
@@ -50,4 +64,10 @@ export function useEnvironment() {
 	const ctx = useContext(EnvironmentContext)
 	if (!ctx) throw new Error("useEnvironment must be used within EnvironmentProvider")
 	return ctx
+}
+
+export function useRuntimeConfig() {
+	const ctx = useContext(EnvironmentContext)
+	if (!ctx) throw new Error("useRuntimeConfig must be used within EnvironmentProvider")
+	return ctx.runtimeConfig
 }

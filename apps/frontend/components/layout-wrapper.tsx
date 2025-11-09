@@ -6,8 +6,7 @@ import "allotment/dist/style.css"
 import { PanelRight } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Button } from "@/components/ui/button"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { EnvironmentProvider } from "@/context/environment-context"
+import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { ChatSidebar } from "./chat-sidebar"
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
@@ -27,10 +26,9 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 	}, [])
 
 	return (
-		<EnvironmentProvider>
-			<SidebarProvider>
-				<AppSidebar />
-				<SidebarInset>
+		<>
+			<AppSidebar />
+			<SidebarInset>
 					{/* App Header */}
 					<header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 						<div className="flex items-center justify-between gap-2 px-4 py-3">
@@ -59,7 +57,6 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 						)}
 					</Allotment>
 				</SidebarInset>
-			</SidebarProvider>
-		</EnvironmentProvider>
+		</>
 	)
 }

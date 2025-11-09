@@ -7,19 +7,18 @@ import { createTRPCReact, httpBatchLink, splitLink } from "@trpc/react-query"
 import type { inferRouterInputs } from "@trpc/server"
 import { useState } from "react"
 import superjson from "superjson"
-import env from "../env-client"
+import { useRuntimeConfig } from "@/context/environment-context"
 
 export const trpc = createTRPCReact<ControlPlaneRouter>()
 
 export type RouterInputs = inferRouterInputs<ControlPlaneRouter>
 
-function getUrl() {
-	const port = env.NEXT_PUBLIC_CP_PORT
+function getUrl(port: string) {
 	return `http://localhost:${port}`
 }
 
-function getWsUrl() {
-	const url = getUrl()
+function getWsUrl(port: string) {
+	const url = getUrl(port)
 	return url.replace("http://", "ws://").replace("https://", "wss://")
 }
 
@@ -49,13 +48,16 @@ function getQueryClient() {
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
 	const queryClient = getQueryClient()
+	const config = useRuntimeConfig()
 
 	const [trpcClient] = useState(() => {
+		const port = config.controlPlanePort
+
 		// Only create WebSocket client in browser
 		const wsClient =
 			typeof window !== "undefined"
 				? createWSClient({
-						url: getWsUrl(),
+						url: getWsUrl(port),
 					})
 				: null
 
@@ -69,11 +71,11 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
 								transformer: superjson,
 							})
 						: httpBatchLink({
-								url: getUrl(),
+								url: getUrl(port),
 								transformer: superjson,
 							}),
 					false: httpBatchLink({
-						url: getUrl(),
+						url: getUrl(port),
 						transformer: superjson,
 					}),
 				}),

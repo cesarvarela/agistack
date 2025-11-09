@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
+import env from "../env-server"
 import "./globals.css"
 import { LayoutWrapper } from "@/components/layout-wrapper"
-import { TRPCProvider } from "@/lib/trpc"
 import { Providers } from "./providers"
 
 export const metadata: Metadata = {
@@ -14,13 +14,15 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode
 }>) {
+	const runtimeConfig = {
+		controlPlanePort: env.CONTROL_PLANE_PORT,
+	}
+
 	return (
 		<html lang="en">
 			<body className="antialiased">
-				<Providers>
-					<TRPCProvider>
-						<LayoutWrapper>{children}</LayoutWrapper>
-					</TRPCProvider>
+				<Providers runtimeConfig={runtimeConfig}>
+					<LayoutWrapper>{children}</LayoutWrapper>
 				</Providers>
 			</body>
 		</html>

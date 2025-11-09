@@ -12,8 +12,8 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select } from "@/components/ui/select"
+import { useRuntimeConfig } from "@/context/environment-context"
 import "@xterm/xterm/css/xterm.css"
-import env from "../env-client"
 
 interface ContainerTerminalProps {
 	containerId: string
@@ -23,6 +23,7 @@ interface ContainerTerminalProps {
 export function ContainerTerminal({ containerId, serverId }: ContainerTerminalProps) {
 	const [shell, setShell] = useState<"bash" | "sh" | "ash" | "zsh">("sh")
 	const [isConnected, setIsConnected] = useState(false)
+	const config = useRuntimeConfig()
 	const terminalRef = useRef<HTMLDivElement>(null)
 	const xtermRef = useRef<Terminal | null>(null)
 	const fitAddonRef = useRef<FitAddon | null>(null)
@@ -83,7 +84,7 @@ export function ContainerTerminal({ containerId, serverId }: ContainerTerminalPr
 		terminal.clear()
 
 		// Get Control Plane port and construct WebSocket URL
-		const cpPort = env.NEXT_PUBLIC_CP_PORT
+		const cpPort = config.controlPlanePort
 		const cpUrl = `http://localhost:${cpPort}`
 		const wsUrl = cpUrl.replace("http://", "ws://").replace("https://", "wss://")
 

@@ -1,9 +1,9 @@
 import { z } from "zod"
 
-const schema = z.object({
-	NEXT_PUBLIC_CP_PORT: z.string().min(1),
-})
+// Client-side environment variables
+// All runtime config is now fetched via /api/config endpoint
+const schema = z.object({})
 
-const env = schema.parse({ NEXT_PUBLIC_CP_PORT: process.env.NEXT_PUBLIC_CP_PORT })
+const env = schema.parse({})
 
 export default env

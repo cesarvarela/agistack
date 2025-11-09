@@ -28,8 +28,8 @@ RUN HUSKY=0 pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build Next.js frontend with hardcoded control plane port
-RUN cd apps/frontend && DOCKER_BUILD=true NEXT_PUBLIC_CP_PORT=14002 pnpm build
+# Build Next.js frontend (port configured at runtime via /api/config)
+RUN cd apps/frontend && DOCKER_BUILD=true pnpm build
 
 # Production stage
 FROM node:20
