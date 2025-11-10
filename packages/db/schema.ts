@@ -72,7 +72,30 @@ export const settings = sqliteTable("settings", {
 	allowedCommands: text("allowed_commands", { mode: "json" })
 		.$type<string[]>()
 		.notNull()
-		.$default(() => ["docker", "ls", "cat", "grep", "ps", "df", "du", "pwd", "whoami", "uname"]),
+		.$default(() => [
+			"docker",
+			"ls",
+			"cat",
+			"grep",
+			"ps",
+			"df",
+			"du",
+			"pwd",
+			"whoami",
+			"uname",
+			"tail",
+			"head",
+			"find",
+			"wc",
+			"curl",
+			"ping",
+			"netstat",
+			"free",
+			"uptime",
+			"hostname",
+			"which",
+			"env",
+		]),
 	updatedAt: integer("updated_at", { mode: "timestamp" })
 		.notNull()
 		.$defaultFn(() => new Date()),

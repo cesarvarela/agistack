@@ -237,7 +237,7 @@ export function ChatInput({ conversationId: _conversationId, onMessagesUpdate }:
 						adjustTextareaHeight()
 					}}
 					onKeyDown={onKeyDown}
-					placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
+					placeholder="Type here..."
 					disabled={status === "streaming" || status === "submitted"}
 					className="flex-1 resize-none min-h-[40px] max-h-[200px]"
 					rows={1}
