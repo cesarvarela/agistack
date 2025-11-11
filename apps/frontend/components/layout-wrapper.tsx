@@ -29,34 +29,34 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 		<>
 			<AppSidebar />
 			<SidebarInset>
-					{/* App Header */}
-					<header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-						<div className="flex items-center justify-between gap-2 px-4 py-3">
-							<SidebarTrigger className="-ml-1" />
-							<Button
-								type="button"
-								variant="ghost"
-								size="icon"
-								onClick={() => setIsChatOpen((prev) => !prev)}
-								className="h-7 w-7"
-							>
-								<PanelRight className="h-4 w-4" />
-								<span className="sr-only">Toggle Chat</span>
-							</Button>
-						</div>
-					</header>
+				{/* App Header */}
+				<header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+					<div className="flex items-center justify-between gap-2 px-4 py-3">
+						<SidebarTrigger className="-ml-1" />
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							onClick={() => setIsChatOpen((prev) => !prev)}
+							className="h-7 w-7"
+						>
+							<PanelRight className="h-4 w-4" />
+							<span className="sr-only">Toggle Chat</span>
+						</Button>
+					</div>
+				</header>
 
-					<Allotment>
-						<Allotment.Pane>
-							<main className="h-full overflow-auto">{children}</main>
+				<Allotment>
+					<Allotment.Pane>
+						<main className="h-full overflow-auto">{children}</main>
+					</Allotment.Pane>
+					{isChatOpen && (
+						<Allotment.Pane preferredSize={400} minSize={300} maxSize={600}>
+							<ChatSidebar />
 						</Allotment.Pane>
-						{isChatOpen && (
-							<Allotment.Pane preferredSize={400} minSize={300} maxSize={600}>
-								<ChatSidebar />
-							</Allotment.Pane>
-						)}
-					</Allotment>
-				</SidebarInset>
+					)}
+				</Allotment>
+			</SidebarInset>
 		</>
 	)
 }

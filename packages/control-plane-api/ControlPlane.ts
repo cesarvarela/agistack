@@ -27,8 +27,8 @@ import { initTRPC } from "@trpc/server"
 import superjson from "superjson"
 import type { WebSocketServer } from "ws"
 import { z } from "zod"
-import { setupTerminalWebSocketProxy } from "./terminal-websocket-proxy"
 import { subscriptionToAsyncGenerator } from "./helpers"
+import { setupTerminalWebSocketProxy } from "./terminal-websocket-proxy"
 
 const t = initTRPC.create({ transformer: superjson })
 
@@ -36,15 +36,18 @@ export class ControlPlane {
 	private httpServer: Server | null = null
 	private wss: WebSocketServer | null = null
 	private port: number
+	private secret: string
 	private nodeRegistry: NodeRegistry
 	private settings: SettingsService
 
 	constructor(
 		private db: DatabaseClient,
 		port: number,
+		secret: string,
 	) {
 		this.port = port
-		this.nodeRegistry = new NodeRegistry(db)
+		this.secret = secret
+		this.nodeRegistry = new NodeRegistry(db, secret)
 		this.settings = new SettingsService(db)
 	}
 
@@ -281,10 +284,14 @@ export class ControlPlane {
 		this.wss = wss
 
 		// Set up raw WebSocket proxy for terminal (like Dokploy)
-		setupTerminalWebSocketProxy(wss, (nodeId: string) => {
-			const node = this.nodeRegistry.getClient(nodeId)
-			return node.url
-		})
+		setupTerminalWebSocketProxy(
+			wss,
+			(nodeId: string) => {
+				const node = this.nodeRegistry.getClient(nodeId)
+				return node.url
+			},
+			this.secret,
+		)
 
 		return router
 	}

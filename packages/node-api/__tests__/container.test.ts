@@ -1,5 +1,6 @@
 import { createTRPCClient, httpBatchLink } from "@trpc/client"
 import getPort from "get-port"
+import superjson from "superjson"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import type { AppRouter } from "../Node"
 import { Node } from "../Node"
@@ -8,20 +9,25 @@ describe("Node API - Container Operations", () => {
 	let node: Node
 	let client: ReturnType<typeof createTRPCClient<AppRouter>>
 	let port: number
+	const TEST_SECRET = "test-secret-for-testing-only"
 
 	beforeAll(async () => {
 		// Get a free port dynamically to avoid conflicts
 		port = await getPort()
 
-		// Setup: Start Node instance
-		node = new Node(port)
+		// Setup: Start Node instance with test secret
+		node = new Node(port, TEST_SECRET)
 		await node.start()
 
-		// Create tRPC client (HTTP only for simple queries)
+		// Create tRPC client (HTTP only for simple queries) with auth header
 		client = createTRPCClient<AppRouter>({
 			links: [
 				httpBatchLink({
 					url: `http://localhost:${port}`,
+					headers: () => ({
+						authorization: `Bearer ${TEST_SECRET}`,
+					}),
+					transformer: superjson,
 				}),
 			],
 		})
@@ -48,7 +54,11 @@ describe("Node API - Container Operations", () => {
 
 			expect(response.containers).toBeDefined()
 			expect(response.containers.length).toBeGreaterThan(0)
-			expect(response.containers.every((c) => c.state === "running")).toBe(true)
+			expect(
+				response.containers.every(
+					(c: (typeof response.containers)[number]) => c.state === "running",
+				),
+			).toBe(true)
 		})
 
 		it("should filter stopped containers", async () => {
@@ -56,7 +66,11 @@ describe("Node API - Container Operations", () => {
 
 			expect(response.containers).toBeDefined()
 			expect(response.containers.length).toBeGreaterThan(0)
-			expect(response.containers.every((c) => c.state !== "running")).toBe(true)
+			expect(
+				response.containers.every(
+					(c: (typeof response.containers)[number]) => c.state !== "running",
+				),
+			).toBe(true)
 		})
 
 		it("should return proper container structure", async () => {

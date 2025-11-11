@@ -9,7 +9,10 @@ import { NodeClient } from "./NodeClient"
 export class NodeRegistry {
 	private clientCache = new Map<string, NodeClient>()
 
-	constructor(private db: DatabaseClient) {}
+	constructor(
+		private db: DatabaseClient,
+		private secret: string,
+	) {}
 
 	/**
 	 * Get node database record by ID
@@ -36,7 +39,7 @@ export class NodeRegistry {
 		}
 
 		const node = this.getNodeRecord(nodeId)
-		const newClient = new NodeClient(node.url)
+		const newClient = new NodeClient(node.url, this.secret)
 		this.clientCache.set(nodeId, newClient)
 		return newClient
 	}

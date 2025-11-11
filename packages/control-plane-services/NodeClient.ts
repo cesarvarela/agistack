@@ -1,5 +1,6 @@
 import type { AppRouter } from "@agistack/node-api"
 import { createTRPCProxyClient, createWSClient, wsLink } from "@trpc/client"
+import superjson from "superjson"
 
 /**
  * Converts HTTP/HTTPS URL to WebSocket URL
@@ -14,12 +15,22 @@ export class NodeClient {
 	private wsClient: ReturnType<typeof createWSClient>
 	public readonly url: string
 
-	constructor(nodeUrl: string) {
+	constructor(nodeUrl: string, secret: string) {
 		this.url = nodeUrl
 		const wsUrl = toWebSocketUrl(nodeUrl)
-		this.wsClient = createWSClient({ url: wsUrl })
+		this.wsClient = createWSClient({
+			url: wsUrl,
+			connectionParams: async () => ({
+				authorization: `Bearer ${secret}`,
+			}),
+		})
 		this.trpcClient = createTRPCProxyClient<AppRouter>({
-			links: [wsLink({ client: this.wsClient })],
+			links: [
+				wsLink({
+					client: this.wsClient,
+					transformer: superjson,
+				}),
+			],
 		})
 	}
 

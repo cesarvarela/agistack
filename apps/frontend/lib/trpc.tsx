@@ -13,11 +13,11 @@ export const trpc = createTRPCReact<ControlPlaneRouter>()
 
 export type RouterInputs = inferRouterInputs<ControlPlaneRouter>
 
-function getUrl(port: string) {
+function getUrl(port: number) {
 	return `http://localhost:${port}`
 }
 
-function getWsUrl(port: string) {
+function getWsUrl(port: number) {
 	const url = getUrl(port)
 	return url.replace("http://", "ws://").replace("https://", "wss://")
 }

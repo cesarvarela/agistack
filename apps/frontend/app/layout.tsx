@@ -1,3 +1,4 @@
+import { CONTROL_PLANE_PORT } from "@agistack/control-plane-api/constants"
 import type { Metadata } from "next"
 import env from "../env-server"
 import "./globals.css"
@@ -5,7 +6,7 @@ import { LayoutWrapper } from "@/components/layout-wrapper"
 import { Providers } from "./providers"
 
 export const metadata: Metadata = {
-	title: "AgStack - Container Orchestration",
+	title: "AGIStack - Container Orchestration",
 	description: "AI-powered Docker container management",
 }
 
@@ -15,7 +16,8 @@ export default function RootLayout({
 	children: React.ReactNode
 }>) {
 	const runtimeConfig = {
-		controlPlanePort: env.CONTROL_PLANE_PORT,
+		controlPlanePort: CONTROL_PLANE_PORT,
+		agentSecret: env.AGENT_SECRET,
 	}
 
 	return (

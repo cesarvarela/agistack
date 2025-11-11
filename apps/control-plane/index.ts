@@ -1,7 +1,9 @@
 import { resolve } from "node:path"
 import { ControlPlane, type ControlPlaneRouter } from "@agistack/control-plane-api"
+import { CONTROL_PLANE_PORT } from "@agistack/control-plane-api/constants"
 import { getDrizzle } from "@agistack/db"
 import { runMigrations } from "@agistack/db/migrate"
+import { NODE_PORT } from "@agistack/node-api/constants"
 import { createTRPCProxyClient, httpBatchLink } from "@trpc/client"
 import superjson from "superjson"
 import env from "./env"
@@ -14,20 +16,18 @@ import env from "./env"
 
 	const db = getDrizzle(databasePath)
 
-	const controlPlane = new ControlPlane(db, env.CONTROL_PLANE_PORT)
+	const controlPlane = new ControlPlane(db, CONTROL_PLANE_PORT, env.AGENT_SECRET)
 
 	await controlPlane.start()
 
 	console.log("Control plane started")
 
-	const agentPort = env.AGENT_PORT
-	const agentUrl = `http://localhost:${agentPort}`
-	const cpPort = env.CONTROL_PLANE_PORT
+	const agentUrl = `http://localhost:${NODE_PORT}`
 
 	const client = createTRPCProxyClient<ControlPlaneRouter>({
 		links: [
 			httpBatchLink({
-				url: `http://localhost:${cpPort}`,
+				url: `http://localhost:${CONTROL_PLANE_PORT}`,
 				transformer: superjson,
 			}),
 		],

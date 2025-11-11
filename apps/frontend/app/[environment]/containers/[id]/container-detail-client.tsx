@@ -196,9 +196,9 @@ export function ContainerDetailClient({ container, serverId }: ContainerDetailCl
 								<div>
 									<p className="text-sm font-medium text-gray-500 mb-2">Ports</p>
 									<div className="space-y-1">
-										{container.ports.map((port: ContainerPort) => (
+										{container.ports.map((port: ContainerPort, index: number) => (
 											<p
-												key={`${port.PrivatePort}-${port.Type}-${port.PublicPort || "none"}`}
+												key={`${index}-${port.PrivatePort}-${port.Type}-${port.PublicPort || "none"}`}
 												className="text-sm font-mono"
 											>
 												{port.PublicPort ? `${port.PublicPort}:` : ""}

@@ -1,3 +1,4 @@
+import crypto from "node:crypto"
 import type { IncomingMessage } from "node:http"
 import type {
 	HttpOperation,
@@ -12,6 +13,41 @@ import superjson from "superjson"
 import type { WebSocket } from "ws"
 import { WebSocketServer } from "ws"
 import type { z } from "zod"
+
+/**
+ * tRPC context structure with authorization header
+ */
+export interface TRPCContext {
+	req: {
+		headers: {
+			authorization?: string
+		}
+	}
+}
+
+/**
+ * Validates the authorization header for WebSocket connections (terminal)
+ * Throws error if secret is missing or invalid
+ */
+function validateAuthHeader(authHeader: string | undefined, expectedSecret: string): void {
+	if (!authHeader || !authHeader.startsWith("Bearer ")) {
+		throw new Error("Missing or invalid authorization header")
+	}
+
+	const providedSecret = authHeader.substring(7) // Remove "Bearer "
+
+	// Timing-safe comparison
+	const expectedBuffer = Buffer.from(expectedSecret, "utf8")
+	const providedBuffer = Buffer.from(providedSecret, "utf8")
+
+	if (expectedBuffer.length !== providedBuffer.length) {
+		throw new Error("Invalid secret")
+	}
+
+	if (!crypto.timingSafeEqual(expectedBuffer, providedBuffer)) {
+		throw new Error("Invalid secret")
+	}
+}
 
 /**
  * Generic helper for executing stream operations with standardized event wrapping
@@ -87,7 +123,7 @@ export async function executeHttpOperation<
  * Sets up WebSocket handler for Docker container terminal (Node servers only)
  * Based on Dokploy's implementation: direct piping between WebSocket and PTY
  */
-export function setupTerminalWebSocket(wss: WebSocketServer) {
+export function setupTerminalWebSocket(wss: WebSocketServer, secret: string) {
 	let connectionCount = 0
 	wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
 		connectionCount++
@@ -100,6 +136,19 @@ export function setupTerminalWebSocket(wss: WebSocketServer) {
 		// Only handle /terminal path
 		if (url.pathname !== "/terminal") {
 			console.log(`[Terminal][${sessionId}] REJECTED - not /terminal path`)
+			return
+		}
+
+		// Validate authorization - check both Authorization header and query param
+		const authHeader = req.headers.authorization || url.searchParams.get("authorization")
+		try {
+			validateAuthHeader(authHeader || undefined, secret)
+		} catch (error) {
+			console.error(`[Terminal][${sessionId}] Authentication failed:`, error)
+			ws.send(
+				`Error: Authentication failed - ${error instanceof Error ? error.message : "Unknown error"}`,
+			)
+			ws.close(4001, "Authentication failed")
 			return
 		}
 
@@ -231,14 +280,35 @@ export function createTRPCServerWithWebSocket<TRouter extends AnyRouter>({
 	applyWSSHandler({
 		wss: trpcWss,
 		router,
-		createContext: () => ({}),
+		createContext: ({ info }) => {
+			// Extract authorization from WebSocket connection params
+			const authorization = (info as { connectionParams?: { authorization?: string } })
+				?.connectionParams?.authorization
+			return {
+				req: {
+					headers: {
+						authorization,
+					},
+				},
+			} satisfies TRPCContext
+		},
 		transformer: superjson,
 	})
 
 	// Create HTTP server with tRPC and CORS support
 	const httpServer = createHTTPServer({
 		router,
-		createContext: () => ({}),
+		createContext: ({ req }) => {
+			// Extract authorization from HTTP headers
+			const authorization = (req as IncomingMessage)?.headers?.authorization
+			return {
+				req: {
+					headers: {
+						authorization,
+					},
+				},
+			} satisfies TRPCContext
+		},
 		transformer: superjson,
 		middleware: (req, res, next) => {
 			// Enable CORS for all origins in development

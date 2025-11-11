@@ -6,7 +6,8 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react"
 type EnvId = string | null
 
 export interface RuntimeConfig {
-	controlPlanePort: string
+	controlPlanePort: number
+	agentSecret: string
 }
 
 interface EnvironmentContextValue {

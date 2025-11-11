@@ -8,6 +8,7 @@ import WebSocket, { type WebSocketServer } from "ws"
 export function setupTerminalWebSocketProxy(
 	wss: WebSocketServer,
 	getNodeUrl: (nodeId: string) => string,
+	secret: string,
 ) {
 	let proxyConnectionCount = 0
 
@@ -57,12 +58,12 @@ export function setupTerminalWebSocketProxy(
 
 			const nodeWsUrl = nodeUrl.replace("http://", "ws://").replace("https://", "wss://")
 			console.log(
-				`[Proxy][${proxyId}] Connecting to: ${nodeWsUrl}/terminal?containerId=${containerId}&shell=${shell}`,
+				`[Proxy][${proxyId}] Connecting to: ${nodeWsUrl}/terminal?containerId=${containerId}&shell=${shell}&authorization=Bearer ***`,
 			)
 
 			// Connect to Node's terminal WebSocket
 			const nodeWs = new WebSocket(
-				`${nodeWsUrl}/terminal?containerId=${containerId}&shell=${shell}`,
+				`${nodeWsUrl}/terminal?containerId=${containerId}&shell=${shell}&authorization=Bearer ${secret}`,
 			)
 
 			let nodeToClientCount = 0

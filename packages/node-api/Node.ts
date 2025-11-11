@@ -1,3 +1,4 @@
+import crypto from "node:crypto"
 import type { Server } from "node:http"
 import {
 	execOperation,
@@ -11,79 +12,123 @@ import {
 	streamLogsOperation,
 	streamStatsOperation,
 } from "@agistack/node-services/operations"
-import { initTRPC } from "@trpc/server"
+import { initTRPC, TRPCError } from "@trpc/server"
+import superjson from "superjson"
 import type { WebSocketServer } from "ws"
 import {
 	createTRPCServerWithWebSocket,
 	executeHttpOperation,
 	executeStreamOperation,
 	setupTerminalWebSocket,
+	type TRPCContext,
 } from "./helpers"
 
-const t = initTRPC.create()
+const t = initTRPC.context<TRPCContext>().create({
+	transformer: superjson,
+})
 
 export class Node {
 	private httpServer: Server | null = null
 	private wss: WebSocketServer | null = null
 	private port: number
+	private secret: string
+	private protectedProcedure: ReturnType<typeof t.procedure.use>
 
-	constructor(port: number) {
+	constructor(port: number, secret: string) {
 		this.port = port
+		this.secret = secret
+
+		// Create auth middleware inline - validates AGISTACK_SECRET using timing-safe comparison
+		const authMiddleware = t.middleware(({ ctx, next }) => {
+			const authHeader = ctx.req?.headers?.authorization
+
+			if (!authHeader || !authHeader.startsWith("Bearer ")) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "Missing or invalid authorization header",
+				})
+			}
+
+			const providedSecret = authHeader.substring(7) // Remove "Bearer "
+
+			// Timing-safe comparison to prevent timing attacks
+			const expectedBuffer = Buffer.from(secret, "utf8")
+			const providedBuffer = Buffer.from(providedSecret, "utf8")
+
+			if (expectedBuffer.length !== providedBuffer.length) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "Invalid secret",
+				})
+			}
+
+			if (!crypto.timingSafeEqual(expectedBuffer, providedBuffer)) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "Invalid secret",
+				})
+			}
+
+			return next({ ctx })
+		})
+
+		this.protectedProcedure = t.procedure.use(authMiddleware)
 	}
 
 	/**
 	 * Creates the tRPC router with all operations
 	 */
 	private getRouter() {
+		const protectedProcedure = this.protectedProcedure
 		return t.router({
 			container: t.router({
-				list: t.procedure
+				list: protectedProcedure
 					.input(listContainersOperation.metadata.inputSchema)
 					.output(listContainersOperation.metadata.outputSchema)
 					.query(({ input }) => executeHttpOperation(listContainersOperation, input)),
 
-				inspect: t.procedure
+				inspect: protectedProcedure
 					.input(inspectContainerOperation.metadata.inputSchema)
 					.output(inspectContainerOperation.metadata.outputSchema)
 					.query(({ input }) => executeHttpOperation(inspectContainerOperation, input)),
 
-				logs: t.procedure
+				logs: protectedProcedure
 					.input(getContainerLogsOperation.metadata.inputSchema)
 					.output(getContainerLogsOperation.metadata.outputSchema)
 					.query(({ input }) => executeHttpOperation(getContainerLogsOperation, input)),
 
-				start: t.procedure
+				start: protectedProcedure
 					.input(startContainerOperation.metadata.inputSchema)
 					.output(startContainerOperation.metadata.outputSchema)
 					.mutation(({ input }) => executeHttpOperation(startContainerOperation, input)),
 
-				stop: t.procedure
+				stop: protectedProcedure
 					.input(stopContainerOperation.metadata.inputSchema)
 					.output(stopContainerOperation.metadata.outputSchema)
 					.mutation(({ input }) => executeHttpOperation(stopContainerOperation, input)),
 
-				restart: t.procedure
+				restart: protectedProcedure
 					.input(restartContainerOperation.metadata.inputSchema)
 					.output(restartContainerOperation.metadata.outputSchema)
 					.mutation(({ input }) => executeHttpOperation(restartContainerOperation, input)),
 
-				streamLogs: t.procedure
+				streamLogs: protectedProcedure
 					.input(streamLogsOperation.metadata.inputSchema)
 					.subscription(({ input }) => executeStreamOperation(streamLogsOperation, input)),
 
-				streamStats: t.procedure
+				streamStats: protectedProcedure
 					.input(streamStatsOperation.metadata.inputSchema)
 					.subscription(({ input }) => executeStreamOperation(streamStatsOperation, input)),
 			}),
 
 			image: t.router({
-				pullImage: t.procedure
+				pullImage: protectedProcedure
 					.input(pullImageOperation.metadata.inputSchema)
 					.subscription(({ input }) => executeStreamOperation(pullImageOperation, input)),
 			}),
 
 			server: t.router({
-				exec: t.procedure
+				exec: protectedProcedure
 					.input(execOperation.metadata.inputSchema)
 					.output(execOperation.metadata.outputSchema)
 					.mutation(({ input }) => executeHttpOperation(execOperation, input)),
@@ -103,8 +148,7 @@ export class Node {
 		this.httpServer = httpServer
 		this.wss = wss
 
-		// Set up terminal WebSocket handler for Docker containers
-		setupTerminalWebSocket(wss)
+		setupTerminalWebSocket(wss, this.secret)
 
 		return router
 	}

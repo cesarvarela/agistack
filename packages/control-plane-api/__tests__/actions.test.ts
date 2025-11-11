@@ -20,7 +20,7 @@ describe("Control Plane API - Actions", () => {
 		testDb = await setupTestDatabase("control-plane-actions")
 
 		// Start ControlPlane
-		controlPlane = new ControlPlane(testDb.db, port)
+		controlPlane = new ControlPlane(testDb.db, port, "test-secret")
 		await controlPlane.start()
 
 		// Create tRPC client (HTTP only)

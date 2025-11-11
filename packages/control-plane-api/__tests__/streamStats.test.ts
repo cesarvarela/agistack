@@ -26,11 +26,11 @@ describe("Control Plane API - streamStats Subscription", () => {
 		testDb = await setupTestDatabase("control-plane-stream-stats")
 
 		// Start Node server first
-		node = new Node(nodePort)
+		node = new Node(nodePort, "test-secret")
 		await node.start()
 
 		// Start ControlPlane
-		controlPlane = new ControlPlane(testDb.db, port)
+		controlPlane = new ControlPlane(testDb.db, port, "test-secret")
 		await controlPlane.start()
 
 		// Create WebSocket client for subscriptions
