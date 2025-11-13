@@ -265,6 +265,25 @@ export class ControlPlane {
 							)
 						}),
 				}),
+
+				server: t.router({
+					stats: t.procedure
+						.input(z.object({ nodeId: z.string() }))
+						.query(async ({ input }) => {
+							const nodeClient = this.nodeRegistry.getClient(input.nodeId)
+							return await nodeClient.client.server.stats.query({})
+						}),
+
+					streamStats: t.procedure
+						.input(z.object({ nodeId: z.string() }))
+						.subscription(({ input }) => {
+							const nodeClient = this.nodeRegistry.getClient(input.nodeId)
+
+							return subscriptionToAsyncGenerator((callbacks) =>
+								nodeClient.client.server.streamStats.subscribe({}, callbacks),
+							)
+						}),
+				}),
 			}),
 		})
 	}

@@ -163,3 +163,54 @@ export const execMetadata = {
 		stderr: z.string().describe("Standard error output"),
 	}),
 }
+
+export const serverStatsMetadata = {
+	name: "server.stats" as const,
+	description: "Get historical server statistics (CPU, memory, disk, network) for the last 24 hours",
+	inputSchema: z.object({}),
+	outputSchema: z.array(
+		z.object({
+			timestamp: z.number().describe("Unix timestamp in milliseconds"),
+			cpu: z.number().describe("CPU usage percentage (0-100)"),
+			memory: z.object({
+				used: z.number().describe("Used memory in bytes"),
+				total: z.number().describe("Total memory in bytes"),
+				percent: z.number().describe("Memory usage percentage (0-100)"),
+			}),
+			disk: z.object({
+				used: z.number().describe("Used disk space in bytes"),
+				total: z.number().describe("Total disk space in bytes"),
+				percent: z.number().describe("Disk usage percentage (0-100)"),
+			}),
+			network: z.object({
+				rxRate: z.number().describe("Network receive rate in bytes/second"),
+				txRate: z.number().describe("Network transmit rate in bytes/second"),
+			}),
+		}),
+	),
+}
+
+export const streamServerStatsMetadata = {
+	name: "server.streamStats" as const,
+	description: "Stream real-time server statistics (CPU, memory, disk, network)",
+	inputSchema: z.object({}),
+	outputSchema: z.object({
+		timestamp: z.number().describe("Unix timestamp in milliseconds"),
+		cpu: z.number().describe("CPU usage percentage (0-100)"),
+		memory: z.object({
+			used: z.number().describe("Used memory in bytes"),
+			total: z.number().describe("Total memory in bytes"),
+			percent: z.number().describe("Memory usage percentage (0-100)"),
+		}),
+		disk: z.object({
+			used: z.number().describe("Used disk space in bytes"),
+			total: z.number().describe("Total disk space in bytes"),
+			percent: z.number().describe("Disk usage percentage (0-100)"),
+		}),
+		network: z.object({
+			rxRate: z.number().describe("Network receive rate in bytes/second"),
+			txRate: z.number().describe("Network transmit rate in bytes/second"),
+		}),
+	}),
+	cancellable: true as const,
+}

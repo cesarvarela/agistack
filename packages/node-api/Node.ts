@@ -7,9 +7,12 @@ import {
 	listContainersOperation,
 	pullImageOperation,
 	restartContainerOperation,
+	serverStatsOperation,
+	setStatsService,
 	startContainerOperation,
 	stopContainerOperation,
 	streamLogsOperation,
+	streamServerStatsOperation,
 	streamStatsOperation,
 } from "@agistack/node-services/operations"
 import { initTRPC, TRPCError } from "@trpc/server"
@@ -22,6 +25,7 @@ import {
 	setupTerminalWebSocket,
 	type TRPCContext,
 } from "./helpers"
+import { ServerStatsService } from "./ServerStatsService"
 
 const t = initTRPC.context<TRPCContext>().create({
 	transformer: superjson,
@@ -33,10 +37,15 @@ export class Node {
 	private port: number
 	private secret: string
 	private protectedProcedure: ReturnType<typeof t.procedure.use>
+	private statsService: ServerStatsService
 
 	constructor(port: number, secret: string) {
 		this.port = port
 		this.secret = secret
+		this.statsService = new ServerStatsService()
+
+		// Initialize stats service for stream operation
+		setStatsService(this.statsService)
 
 		// Create auth middleware inline - validates AGISTACK_SECRET using timing-safe comparison
 		const authMiddleware = t.middleware(({ ctx, next }) => {
@@ -132,6 +141,17 @@ export class Node {
 					.input(execOperation.metadata.inputSchema)
 					.output(execOperation.metadata.outputSchema)
 					.mutation(({ input }) => executeHttpOperation(execOperation, input)),
+
+				stats: protectedProcedure
+					.input(serverStatsOperation.metadata.inputSchema)
+					.output(serverStatsOperation.metadata.outputSchema)
+					.query(({ input }) =>
+						executeHttpOperation(serverStatsOperation, input, { statsService: this.statsService }),
+					),
+
+				streamStats: protectedProcedure
+					.input(streamServerStatsOperation.metadata.inputSchema)
+					.subscription(({ input }) => executeStreamOperation(streamServerStatsOperation, input)),
 			}),
 		})
 	}
@@ -150,10 +170,16 @@ export class Node {
 
 		setupTerminalWebSocket(wss, this.secret)
 
+		// Start stats collection
+		this.statsService.start()
+
 		return router
 	}
 
 	async stop() {
+		// Stop stats collection
+		this.statsService.stop()
+
 		return new Promise<void>((resolve, reject) => {
 			// Close WebSocket server first
 			if (this.wss) {
