@@ -21,7 +21,7 @@ export default function RootLayout({
 	}
 
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<body className="antialiased">
 				<Providers runtimeConfig={runtimeConfig}>
 					<LayoutWrapper>{children}</LayoutWrapper>

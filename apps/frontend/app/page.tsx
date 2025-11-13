@@ -44,10 +44,10 @@ export default function Home() {
 					{[1, 2, 3].map((i) => (
 						<div
 							key={i}
-							className="p-4 border rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse"
+							className="p-4 border rounded-lg bg-muted animate-pulse"
 						>
-							<div className="h-6 bg-gray-300 dark:bg-gray-700 rounded mb-2" />
-							<div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-2/3" />
+							<div className="h-6 bg-muted/70 rounded mb-2" />
+							<div className="h-4 bg-muted/70 rounded w-2/3" />
 						</div>
 					))}
 				</div>
@@ -64,20 +64,20 @@ export default function Home() {
 
 			{nodes.length === 0 ? (
 				<div className="text-center py-12">
-					<p className="text-gray-500 mb-4">No environments configured</p>
-					<p className="text-sm text-gray-400">Add a server to get started</p>
+					<p className="text-muted-foreground mb-4">No environments configured</p>
+					<p className="text-sm text-muted-foreground/80">Add a server to get started</p>
 				</div>
 			) : (
 				<div className="space-y-2">
 					{nodes.map((node) => (
 						<div
 							key={node.id}
-							className="flex items-center justify-between p-4 border rounded-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
+							className="flex items-center justify-between p-4 border rounded-lg bg-card hover:border-primary transition-colors"
 						>
 							<Link href={`/${node.id}/containers`} className="flex-1 flex items-center gap-4">
 								<div className="flex-1">
 									<h2 className="text-lg font-semibold">{node.name}</h2>
-									<p className="text-sm text-gray-500 dark:text-gray-400">{node.url}</p>
+									<p className="text-sm text-muted-foreground">{node.url}</p>
 								</div>
 							</Link>
 							<button
