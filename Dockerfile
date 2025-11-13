@@ -1,7 +1,10 @@
 # syntax=docker/dockerfile:1
 
 # Build stage
-FROM node:20 AS builder
+FROM node:22-alpine AS builder
+
+# Install build dependencies for native modules
+RUN apk add --no-cache python3 make g++
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
@@ -32,16 +35,32 @@ COPY . .
 RUN cd apps/frontend && DOCKER_BUILD=true pnpm build
 
 # Production stage
-FROM node:20
+FROM node:22-alpine
 
 # Install pnpm and PM2
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate && \
+RUN apk add --no-cache tini && \
+    corepack enable && corepack prepare pnpm@9.0.0 --activate && \
     npm install -g pm2
 
 WORKDIR /app
 
-# Copy everything from builder stage (includes built frontend and all dependencies)
-COPY --from=builder /app ./
+# Copy standalone Next.js output (minimal runtime)
+COPY --from=builder /app/apps/frontend/.next/standalone ./
+COPY --from=builder /app/apps/frontend/.next/static ./apps/frontend/.next/static
+
+# Copy other apps and packages (control-plane and node still need full setup)
+COPY --from=builder /app/apps/control-plane ./apps/control-plane
+COPY --from=builder /app/apps/node ./apps/node
+COPY --from=builder /app/packages ./packages
+
+# Copy only necessary node_modules for non-frontend apps
+COPY --from=builder /app/node_modules ./node_modules
+
+# Clean up unnecessary dependencies and platform binaries
+RUN rm -rf node_modules/.pnpm/@next+swc-linux-arm64-gnu* && \
+    rm -rf node_modules/.pnpm/@img+sharp-libvips-linux-arm64@* && \
+    rm -rf node_modules/.pnpm/typescript* && \
+    rm -rf /root/.npm /root/.cache
 
 # Create data directory for SQLite database
 RUN mkdir -p /app/data
