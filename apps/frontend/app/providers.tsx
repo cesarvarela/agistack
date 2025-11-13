@@ -10,16 +10,18 @@ import { TRPCProvider } from "@/lib/trpc"
 export function Providers({
 	children,
 	runtimeConfig,
+	defaultSidebarOpen,
 }: {
 	children: ReactNode
 	runtimeConfig: RuntimeConfig
+	defaultSidebarOpen: boolean
 }) {
 	return (
 		<NuqsAdapter>
 			<EnvironmentProvider runtimeConfig={runtimeConfig}>
 				<TRPCProvider>
 					<ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-						<SidebarProvider>{children}</SidebarProvider>
+						<SidebarProvider defaultOpen={defaultSidebarOpen}>{children}</SidebarProvider>
 					</ThemeProvider>
 				</TRPCProvider>
 			</EnvironmentProvider>

@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { cookies } from "next/headers"
 import env from "../env-server"
 import "./globals.css"
 import { LayoutWrapper } from "@/components/layout-wrapper"
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 	description: "AI-powered Docker container management",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode
@@ -20,10 +21,13 @@ export default function RootLayout({
 		nodePort: env.NODE_PORT,
 	}
 
+	const cookieStore = await cookies()
+	const defaultSidebarOpen = cookieStore.get("sidebar_state")?.value === "true"
+
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body className="antialiased">
-				<Providers runtimeConfig={runtimeConfig}>
+				<Providers runtimeConfig={runtimeConfig} defaultSidebarOpen={defaultSidebarOpen}>
 					<LayoutWrapper>{children}</LayoutWrapper>
 				</Providers>
 			</body>
