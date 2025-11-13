@@ -4,8 +4,9 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { trpc } from "@/lib/trpc"
-import { Activity, Box, Container, Cpu, HardDrive, MemoryStick, Network, Server } from "lucide-react"
+import { Activity, Box, Container, Server } from "lucide-react"
 import Link from "next/link"
+import { ContainerStatsChart } from "@/components/container-stats-chart"
 
 interface DashboardClientProps {
 	environment: string
@@ -40,79 +41,124 @@ export function DashboardClient({ environment }: DashboardClientProps) {
 			}
 		: null
 
-	// Get latest stats point
-	const latestStats = serverStats && serverStats.length > 0 ? serverStats[serverStats.length - 1] : null
-
-	const formatBytes = (bytes: number) => {
-		if (bytes === 0) return "0 B"
-		const k = 1024
-		const sizes = ["B", "KB", "MB", "GB", "TB"]
-		const i = Math.floor(Math.log(bytes) / Math.log(k))
-		return `${(bytes / k ** i).toFixed(1)} ${sizes[i]}`
-	}
-
-	const formatBytesPerSec = (bytes: number) => {
-		return `${formatBytes(bytes)}/s`
-	}
-
 	return (
 		<div className="container mx-auto p-6">
 			<div className="mb-6">
 				<h1 className="text-3xl font-bold">Dashboard</h1>
-				<p className="text-muted-foreground mt-2">
-					Environment: <span className="font-mono font-semibold">{environment}</span>
-				</p>
 			</div>
 
-			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+			<div className="flex flex-col gap-4 max-w-4xl">
 				{/* Server Overview Card */}
-				<Card className="p-6">
-					<h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+				<Card className="p-4">
+					<h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
 						<Server className="h-5 w-5" />
 						Server Overview
 					</h3>
 
-					<div className="space-y-3">
-						<div>
-							<div className="text-sm font-medium text-gray-600 dark:text-gray-400">Node ID</div>
-							{nodeLoading ? (
-								<Skeleton className="h-4 w-full mt-1" />
-							) : (
-								<div className="text-sm font-mono">{nodeInfo?.node.id || environment}</div>
-							)}
-						</div>
-
-						<div>
-							<div className="text-sm font-medium text-gray-600 dark:text-gray-400">Node Name</div>
-							{nodeLoading ? (
-								<Skeleton className="h-4 w-full mt-1" />
-							) : (
-								<div className="text-sm">{nodeInfo?.node.name || "N/A"}</div>
-							)}
-						</div>
-
-						<div>
-							<div className="text-sm font-medium text-gray-600 dark:text-gray-400">URL</div>
-							{nodeLoading ? (
-								<Skeleton className="h-4 w-full mt-1" />
-							) : (
-								<div className="text-sm font-mono text-blue-600 dark:text-blue-400">
-									{nodeInfo?.node.url || "N/A"}
-								</div>
-							)}
-						</div>
-
-						<div>
-							<div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-								Total Containers
+					{nodeLoading ? (
+						<Skeleton className="h-6 w-full" />
+					) : (
+						<div className="flex items-center gap-6 text-sm">
+							<div className="flex items-center gap-2">
+								<span className="font-medium text-gray-600 dark:text-gray-400">ID:</span>
+								<span className="font-mono">{nodeInfo?.node.id || environment}</span>
 							</div>
-							{containersLoading ? (
-								<Skeleton className="h-6 w-12 mt-1" />
-							) : (
-								<div className="text-2xl font-bold">{containerStats?.total || 0}</div>
-							)}
+							<div className="flex items-center gap-2">
+								<span className="font-medium text-gray-600 dark:text-gray-400">Name:</span>
+								<span>{nodeInfo?.node.name || "N/A"}</span>
+							</div>
+							<div className="flex items-center gap-2">
+								<span className="font-medium text-gray-600 dark:text-gray-400">URL:</span>
+								<span className="font-mono text-blue-600 dark:text-blue-400">
+									{nodeInfo?.node.url || "N/A"}
+								</span>
+							</div>
 						</div>
-					</div>
+					)}
+				</Card>
+
+				{/* Server Stats Card */}
+				<Card className="p-6">
+					<h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+						<Activity className="h-5 w-5" />
+						Server Metrics
+					</h3>
+
+					{statsLoading ? (
+						<div className="space-y-3">
+							<Skeleton className="h-12 w-full" />
+							<Skeleton className="h-12 w-full" />
+							<Skeleton className="h-12 w-full" />
+							<Skeleton className="h-12 w-full" />
+						</div>
+					) : serverStats && serverStats.length > 0 ? (
+						<div className="space-y-6">
+							<ContainerStatsChart
+								title="CPU Usage"
+								series={[
+									{
+										name: "CPU",
+										data: serverStats.map((s) => s.cpu),
+										color: "rgba(249, 115, 22, 1)", // orange-500
+									},
+								]}
+								timestamps={serverStats.map((s) => s.timestamp)}
+								unit="%"
+								height={200}
+							/>
+
+							<ContainerStatsChart
+								title="Memory Usage"
+								series={[
+									{
+										name: "Memory",
+										data: serverStats.map((s) => s.memory.percent),
+										color: "rgba(59, 130, 246, 1)", // blue-500
+									},
+								]}
+								timestamps={serverStats.map((s) => s.timestamp)}
+								unit="%"
+								height={200}
+							/>
+
+							<ContainerStatsChart
+								title="Disk Usage"
+								series={[
+									{
+										name: "Disk",
+										data: serverStats.map((s) => s.disk.percent),
+										color: "rgba(168, 85, 247, 1)", // purple-500
+									},
+								]}
+								timestamps={serverStats.map((s) => s.timestamp)}
+								unit="%"
+								height={200}
+							/>
+
+							<ContainerStatsChart
+								title="Network Activity"
+								series={[
+									{
+										name: "Download (RX)",
+										data: serverStats.map((s) => s.network.rxRate),
+										color: "rgba(34, 197, 94, 1)", // green-500
+									},
+									{
+										name: "Upload (TX)",
+										data: serverStats.map((s) => s.network.txRate),
+										color: "rgba(59, 130, 246, 1)", // blue-500
+									},
+								]}
+								timestamps={serverStats.map((s) => s.timestamp)}
+								unit="bytes/s"
+								height={200}
+							/>
+						</div>
+					) : (
+						<div className="text-sm text-muted-foreground">
+							No stats available yet. Stats are collected every minute.
+						</div>
+					)}
 				</Card>
 
 				{/* Container Statistics Card */}
@@ -178,111 +224,6 @@ export function DashboardClient({ environment }: DashboardClientProps) {
 							>
 								View all containers →
 							</Link>
-						</div>
-					)}
-				</Card>
-
-				{/* Server Stats Card */}
-				<Card className="p-6">
-					<h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-						<Activity className="h-5 w-5" />
-						Server Metrics
-					</h3>
-
-					{statsLoading ? (
-						<div className="space-y-3">
-							<Skeleton className="h-12 w-full" />
-							<Skeleton className="h-12 w-full" />
-							<Skeleton className="h-12 w-full" />
-							<Skeleton className="h-12 w-full" />
-						</div>
-					) : latestStats ? (
-						<div className="space-y-4">
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<Cpu className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-									<span className="text-sm font-medium">CPU</span>
-								</div>
-								<Badge
-									variant="outline"
-									className={
-										latestStats.cpu > 80
-											? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-											: latestStats.cpu > 50
-												? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-												: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-									}
-								>
-									{latestStats.cpu.toFixed(1)}%
-								</Badge>
-							</div>
-
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<MemoryStick className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-									<span className="text-sm font-medium">Memory</span>
-								</div>
-								<div className="text-right">
-									<Badge
-										variant="outline"
-										className={
-											latestStats.memory.percent > 80
-												? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-												: latestStats.memory.percent > 50
-													? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-													: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-										}
-									>
-										{latestStats.memory.percent.toFixed(1)}%
-									</Badge>
-									<div className="text-xs text-muted-foreground mt-1">
-										{formatBytes(latestStats.memory.used)} / {formatBytes(latestStats.memory.total)}
-									</div>
-								</div>
-							</div>
-
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<HardDrive className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-									<span className="text-sm font-medium">Disk</span>
-								</div>
-								<div className="text-right">
-									<Badge
-										variant="outline"
-										className={
-											latestStats.disk.percent > 80
-												? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-												: latestStats.disk.percent > 50
-													? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-													: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-										}
-									>
-										{latestStats.disk.percent.toFixed(1)}%
-									</Badge>
-									<div className="text-xs text-muted-foreground mt-1">
-										{formatBytes(latestStats.disk.used)} / {formatBytes(latestStats.disk.total)}
-									</div>
-								</div>
-							</div>
-
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<Network className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
-									<span className="text-sm font-medium">Network</span>
-								</div>
-								<div className="text-right text-xs">
-									<div className="text-green-600 dark:text-green-400">
-										↓ {formatBytesPerSec(latestStats.network.rxRate)}
-									</div>
-									<div className="text-blue-600 dark:text-blue-400">
-										↑ {formatBytesPerSec(latestStats.network.txRate)}
-									</div>
-								</div>
-							</div>
-						</div>
-					) : (
-						<div className="text-sm text-muted-foreground">
-							No stats available yet. Stats are collected every minute.
 						</div>
 					)}
 				</Card>
