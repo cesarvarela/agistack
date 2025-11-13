@@ -1,18 +1,47 @@
 "use client"
 
+import { Activity, Box, Container, Server } from "lucide-react"
+import Link from "next/link"
+import { useEffect, useState } from "react"
+import { ServerStatsChart } from "@/components/server-stats-chart"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { trpc } from "@/lib/trpc"
-import { Activity, Box, Container, Server } from "lucide-react"
-import Link from "next/link"
-import { ContainerStatsChart } from "@/components/container-stats-chart"
 
 interface DashboardClientProps {
 	environment: string
 }
 
+interface ServerStatsPoint {
+	timestamp: number
+	cpu: number
+	memory: { used: number; total: number; percent: number }
+	disk: { used: number; total: number; percent: number }
+	network: { rxRate: number; txRate: number }
+}
+
+const formatBytes = (bytes: number) => {
+	if (bytes === 0) return "0 B"
+	const k = 1024
+	const sizes = ["B", "KB", "MB", "GB", "TB"]
+	const i = Math.floor(Math.log(bytes) / Math.log(k))
+	return `${(bytes / k ** i).toFixed(1)} ${sizes[i]}`
+}
+
+const TIME_WINDOWS = {
+	"1m": { value: 60000, label: "1m", maxPoints: 60 },
+	"5m": { value: 300000, label: "5m", maxPoints: 300 },
+	"30m": { value: 1800000, label: "30m", maxPoints: 1800 },
+	all: { value: "all" as const, label: "All", maxPoints: 1440 }, // 24 hours
+}
+
+type TimeWindowKey = keyof typeof TIME_WINDOWS
+
 export function DashboardClient({ environment }: DashboardClientProps) {
+	const [timeWindow, setTimeWindow] = useState<TimeWindowKey>("1m")
+
 	const { data: nodeInfo, isLoading: nodeLoading } = trpc.actions.getNodeInfo.useQuery({
 		nodeId: environment,
 	})
@@ -22,12 +51,63 @@ export function DashboardClient({ environment }: DashboardClientProps) {
 		status: "all",
 	})
 
-	const { data: serverStats, isLoading: statsLoading } = trpc.proxy.server.stats.useQuery(
-		{
+	// Load historical data first
+	const { data: historicalStats, isLoading: isHistoricalLoading } =
+		trpc.proxy.server.stats.useQuery({
 			nodeId: environment,
-		},
+		})
+
+	// Use streaming for real-time updates
+	const [serverStatsHistory, setServerStatsHistory] = useState<ServerStatsPoint[]>([])
+	const [isInitialized, setIsInitialized] = useState(false)
+
+	// Filter data based on selected time window
+	const getFilteredData = (data: ServerStatsPoint[]) => {
+		const now = Date.now()
+		const windowValue = TIME_WINDOWS[timeWindow].value
+
+		if (windowValue === "all") {
+			// Show all data for "all" window
+			return data
+		}
+
+		// Filter by time window
+		const cutoffTime = now - windowValue
+		return data.filter((point) => point.timestamp >= cutoffTime)
+	}
+
+	// Initialize with historical data when it loads (only once)
+	useEffect(() => {
+		if (!isInitialized && historicalStats && historicalStats.length > 0) {
+			setServerStatsHistory(historicalStats)
+			setIsInitialized(true)
+		}
+	}, [historicalStats, isInitialized])
+
+	// Stream real-time updates on top of historical data
+	trpc.proxy.server.streamStats.useSubscription(
+		{ nodeId: environment },
 		{
-			refetchInterval: 60000, // Refresh every 60 seconds
+			onData: (event) => {
+				// Extract the actual data from the event wrapper
+				const stat = (event as { data?: ServerStatsPoint })?.data || event
+
+				// Validate the stat has the expected structure
+				if (!stat || typeof stat !== "object") return
+				const s = stat as Partial<ServerStatsPoint>
+				if (!s.memory || !s.disk || !s.network || typeof s.timestamp !== "number") return
+
+				setServerStatsHistory((prev) => {
+					const updated = [...prev, stat as ServerStatsPoint]
+					// Keep a reasonable history (24 hours max at 1 point per second = 86400 points)
+					// This allows switching between time windows without losing data
+					const maxHistoryPoints = 86400
+					return updated.slice(-maxHistoryPoints)
+				})
+			},
+			onError: (err) => {
+				console.error("Server stats stream error:", err)
+			},
 		},
 	)
 
@@ -35,7 +115,8 @@ export function DashboardClient({ environment }: DashboardClientProps) {
 		? {
 				total: containers.containers.length,
 				running: containers.containers.filter((c) => c.state === "running").length,
-				stopped: containers.containers.filter((c) => ["exited", "stopped"].includes(c.state)).length,
+				stopped: containers.containers.filter((c) => ["exited", "stopped"].includes(c.state))
+					.length,
 				paused: containers.containers.filter((c) => c.state === "paused").length,
 				restarting: containers.containers.filter((c) => c.state === "restarting").length,
 			}
@@ -79,79 +160,89 @@ export function DashboardClient({ environment }: DashboardClientProps) {
 
 				{/* Server Stats Card */}
 				<Card className="p-6">
-					<h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-						<Activity className="h-5 w-5" />
-						Server Metrics
-					</h3>
+					<div className="flex items-center justify-between mb-4">
+						<h3 className="text-lg font-semibold flex items-center gap-2">
+							<Activity className="h-5 w-5" />
+							Server Metrics
+						</h3>
+						<div className="flex gap-1">
+							{(Object.keys(TIME_WINDOWS) as TimeWindowKey[]).map((key) => (
+								<Button
+									key={key}
+									variant={timeWindow === key ? "default" : "outline"}
+									size="sm"
+									onClick={() => setTimeWindow(key)}
+									className="h-7 px-2 text-xs"
+								>
+									{TIME_WINDOWS[key].label}
+								</Button>
+							))}
+						</div>
+					</div>
 
-					{statsLoading ? (
+					{isHistoricalLoading ? (
 						<div className="space-y-3">
 							<Skeleton className="h-12 w-full" />
 							<Skeleton className="h-12 w-full" />
 							<Skeleton className="h-12 w-full" />
 							<Skeleton className="h-12 w-full" />
 						</div>
-					) : serverStats && serverStats.length > 0 ? (
+					) : serverStatsHistory.length > 0 ? (
 						<div className="space-y-6">
-							<ContainerStatsChart
+							<ServerStatsChart
 								title="CPU Usage"
-								series={[
-									{
-										name: "CPU",
-										data: serverStats.map((s) => s.cpu),
-										color: "rgba(249, 115, 22, 1)", // orange-500
-									},
-								]}
-								timestamps={serverStats.map((s) => s.timestamp)}
+								data={getFilteredData(serverStatsHistory).map((s) => ({
+									timestamp: s.timestamp,
+									cpu: s.cpu ?? 0,
+								}))}
+								dataKeys={[{ key: "cpu", label: "CPU", color: "hsl(24, 95%, 53%)" }]}
 								unit="%"
 								height={200}
+								formatValue={(value) => `${value.toFixed(1)}%`}
+								windowSize={TIME_WINDOWS[timeWindow].value}
 							/>
 
-							<ContainerStatsChart
+							<ServerStatsChart
 								title="Memory Usage"
-								series={[
-									{
-										name: "Memory",
-										data: serverStats.map((s) => s.memory.percent),
-										color: "rgba(59, 130, 246, 1)", // blue-500
-									},
-								]}
-								timestamps={serverStats.map((s) => s.timestamp)}
+								data={getFilteredData(serverStatsHistory).map((s) => ({
+									timestamp: s.timestamp,
+									memory: s.memory?.percent ?? 0,
+								}))}
+								dataKeys={[{ key: "memory", label: "Memory", color: "hsl(217, 91%, 60%)" }]}
 								unit="%"
 								height={200}
+								formatValue={(value) => `${value.toFixed(1)}%`}
+								windowSize={TIME_WINDOWS[timeWindow].value}
 							/>
 
-							<ContainerStatsChart
+							<ServerStatsChart
 								title="Disk Usage"
-								series={[
-									{
-										name: "Disk",
-										data: serverStats.map((s) => s.disk.percent),
-										color: "rgba(168, 85, 247, 1)", // purple-500
-									},
-								]}
-								timestamps={serverStats.map((s) => s.timestamp)}
+								data={getFilteredData(serverStatsHistory).map((s) => ({
+									timestamp: s.timestamp,
+									disk: s.disk?.percent ?? 0,
+								}))}
+								dataKeys={[{ key: "disk", label: "Disk", color: "hsl(271, 91%, 65%)" }]}
 								unit="%"
 								height={200}
+								formatValue={(value) => `${value.toFixed(1)}%`}
+								windowSize={TIME_WINDOWS[timeWindow].value}
 							/>
 
-							<ContainerStatsChart
+							<ServerStatsChart
 								title="Network Activity"
-								series={[
-									{
-										name: "Download (RX)",
-										data: serverStats.map((s) => s.network.rxRate),
-										color: "rgba(34, 197, 94, 1)", // green-500
-									},
-									{
-										name: "Upload (TX)",
-										data: serverStats.map((s) => s.network.txRate),
-										color: "rgba(59, 130, 246, 1)", // blue-500
-									},
+								data={getFilteredData(serverStatsHistory).map((s) => ({
+									timestamp: s.timestamp,
+									rx: s.network?.rxRate ?? 0,
+									tx: s.network?.txRate ?? 0,
+								}))}
+								dataKeys={[
+									{ key: "rx", label: "Download (RX)", color: "hsl(142, 76%, 36%)" },
+									{ key: "tx", label: "Upload (TX)", color: "hsl(217, 91%, 60%)" },
 								]}
-								timestamps={serverStats.map((s) => s.timestamp)}
 								unit="bytes/s"
 								height={200}
+								formatValue={formatBytes}
+								windowSize={TIME_WINDOWS[timeWindow].value}
 							/>
 						</div>
 					) : (

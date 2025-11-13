@@ -1,5 +1,5 @@
-import os from "node:os"
 import { exec } from "node:child_process"
+import os from "node:os"
 import { promisify } from "node:util"
 
 const execAsync = promisify(exec)
@@ -49,6 +49,23 @@ export class ServerStatsService {
 
 	getAll(): ServerStatsPoint[] {
 		return this.stats
+	}
+
+	async getCurrent(): Promise<ServerStatsPoint> {
+		const [cpu, memory, disk, network] = await Promise.all([
+			this.getCpuUsage(),
+			this.getMemoryUsage(),
+			this.getDiskUsage(),
+			this.getNetworkUsage(),
+		])
+
+		return {
+			timestamp: Date.now(),
+			cpu,
+			memory,
+			disk,
+			network,
+		}
 	}
 
 	private async collectStats() {

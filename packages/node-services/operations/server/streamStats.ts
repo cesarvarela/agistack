@@ -9,6 +9,13 @@ interface ServerStatsService {
 		disk: { used: number; total: number; percent: number }
 		network: { rxRate: number; txRate: number }
 	}>
+	getCurrent(): Promise<{
+		timestamp: number
+		cpu: number
+		memory: { used: number; total: number; percent: number }
+		disk: { used: number; total: number; percent: number }
+		network: { rxRate: number; txRate: number }
+	}>
 }
 
 // Store service reference globally within this module
@@ -26,17 +33,13 @@ export const streamStatsOperation = defineStreamOperation<
 		throw new Error("statsService not initialized - call setStatsService first")
 	}
 
-	// Yield current latest stat immediately
-	const currentStats = statsServiceInstance.getAll()
-	const latestStat = currentStats[currentStats.length - 1]
-	if (latestStat) {
-		yield latestStat
-	}
+	// Yield current stats immediately
+	yield await statsServiceInstance.getCurrent()
 
-	// Then yield new stats every 60 seconds
+	// Then yield fresh stats every second
 	while (!signal?.aborted) {
 		await new Promise<void>((resolve) => {
-			const timeout = setTimeout(resolve, 60000)
+			const timeout = setTimeout(resolve, 1000)
 			signal?.addEventListener("abort", () => {
 				clearTimeout(timeout)
 				resolve()
@@ -45,10 +48,6 @@ export const streamStatsOperation = defineStreamOperation<
 
 		if (signal?.aborted) break
 
-		const stats = statsServiceInstance.getAll()
-		const newLatestStat = stats[stats.length - 1]
-		if (newLatestStat) {
-			yield newLatestStat
-		}
+		yield await statsServiceInstance.getCurrent()
 	}
 })
