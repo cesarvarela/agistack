@@ -97,18 +97,22 @@ describe("Control Plane API - streamStats Subscription", () => {
 		> = []
 
 		await new Promise<void>((resolve, reject) => {
-			let eventCount = 0
+			let dataEventCount = 0
 			const subscription = client.proxy.container.streamStats.subscribe(
 				{ nodeId, dockerId: testContainer.dockerId },
 				{
 					onData: (event: unknown) => {
-						eventCount++
 						const typedEvent = event as { type: string; data?: unknown; error?: unknown }
 
 						// Fail test if we get an error event
 						expect(typedEvent.type).not.toBe("error")
 
-						// Only process data events, skip started/other events
+						// Skip "started" event, only count data events
+						if (typedEvent.type === "started") {
+							return
+						}
+
+						// Process data events
 						const stats = typedEvent.data as
 							| {
 									cpu: number
@@ -118,13 +122,16 @@ describe("Control Plane API - streamStats Subscription", () => {
 							  }
 							| undefined
 
-						// Stats can be undefined for non-data events like "started"
-						statsChunks.push(stats)
+						if (stats !== undefined) {
+							statsChunks.push(stats)
+							dataEventCount++
 
-						// After 3 events total, stop (usually: 1 started + 2 data events)
-						expect(eventCount).toBeLessThanOrEqual(3)
-						subscription.unsubscribe()
-						resolve()
+							// After 2 data events, stop
+							if (dataEventCount >= 2) {
+								subscription.unsubscribe()
+								resolve()
+							}
+						}
 					},
 					onError: (error) => {
 						reject(error)
@@ -133,13 +140,12 @@ describe("Control Plane API - streamStats Subscription", () => {
 			)
 		})
 
-		// Filter out undefined (non-data events) and verify we got 2 real stats
-		const validStats = statsChunks.filter((s): s is NonNullable<typeof s> => s !== undefined)
-		expect(validStats.length).toBe(2)
+		// Verify we got 2 real stats
+		expect(statsChunks.length).toBe(2)
 
 		// Verify first stats chunk structure
 		// biome-ignore lint/style/noNonNullAssertion: asserted length above
-		const firstStats = validStats[0]!
+		const firstStats = statsChunks[0]!
 		expect(firstStats.cpu).toBeTypeOf("number")
 		expect(firstStats.memory.usage).toBeTypeOf("number")
 		expect(firstStats.memory.limit).toBeTypeOf("number")

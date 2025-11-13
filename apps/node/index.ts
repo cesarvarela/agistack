@@ -5,7 +5,7 @@ import env from "./env"
 dotenv.config({ path: "../../.env.local" })
 
 ;(async () => {
-	const node = new Node(env.NODE_PORT, env.AGENT_SECRET)
+	const node = new Node(env.NODE_PORT, env.NODE_SECRET)
 
 	await node.start()
 

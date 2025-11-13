@@ -9,7 +9,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME_MAIN: ${{ github.repository }}
-  IMAGE_NAME_AGENT: ${{ github.repository }}/agent
+  IMAGE_NAME_NODE: ${{ github.repository }}/node
 
 permissions:
   contents: read
@@ -55,8 +55,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  build-agent:
-    name: Build Agent Image
+  build-node:
+    name: Build Node Image
     runs-on: ubuntu-latest
 
     steps:
@@ -77,16 +77,16 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_AGENT }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_NODE }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix={{branch}}-
 
-      - name: Build and push agent image
+      - name: Build and push node image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.agent
+          file: ./Dockerfile.node
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}

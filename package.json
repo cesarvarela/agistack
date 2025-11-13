@@ -7,10 +7,10 @@
 		"packages/*"
 	],
 	"scripts": {
-		"dev": "pnpm --filter '@agistack/agent' --filter '@agistack/control-plane' --filter '@agistack/frontend' dev",
+		"dev": "pnpm --filter '@agistack/node' --filter '@agistack/control-plane' --filter '@agistack/frontend' dev",
 		"test": "pnpm --filter '*' test",
 		"dev:cp": "cd apps/control-plane && pnpm run dev",
-		"dev:agent": "cd apps/agent && pnpm run dev",
+		"dev:node": "cd apps/node && pnpm run dev",
 		"dev:web": "cd apps/frontend && pnpm run dev",
 		"db:generate": "cd packages/control-plane-services && pnpm run db:generate",
 		"db:migrate": "cd packages/control-plane-services && pnpm run db:migrate",

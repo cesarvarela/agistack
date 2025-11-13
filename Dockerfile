@@ -12,7 +12,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/frontend/package.json ./apps/frontend/
 COPY apps/control-plane/package.json ./apps/control-plane/
-COPY apps/agent/package.json ./apps/agent/
+COPY apps/node/package.json ./apps/node/
 COPY packages/control-plane-api/package.json ./packages/control-plane-api/
 COPY packages/control-plane-services/package.json ./packages/control-plane-services/
 COPY packages/node-api/package.json ./packages/node-api/

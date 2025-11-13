@@ -11,9 +11,9 @@ RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
 WORKDIR /app
 
-# Copy package files (only what's needed for agent)
+# Copy package files (only what's needed for node)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/agent/package.json ./apps/agent/
+COPY apps/node/package.json ./apps/node/
 COPY packages/node-api/package.json ./packages/node-api/
 COPY packages/node-services/package.json ./packages/node-services/
 COPY packages/tool-metadata/package.json ./packages/tool-metadata/
@@ -21,10 +21,10 @@ COPY packages/typescript-config/package.json ./packages/typescript-config/
 
 # Install dependencies
 # Skip husky git hooks installation in Docker
-RUN HUSKY=0 pnpm install --frozen-lockfile --filter @agistack/agent...
+RUN HUSKY=0 pnpm install --frozen-lockfile --filter @agistack/node...
 
 # Copy source code
-COPY apps/agent ./apps/agent
+COPY apps/node ./apps/node
 COPY packages/node-api ./packages/node-api
 COPY packages/node-services ./packages/node-services
 COPY packages/tool-metadata ./packages/tool-metadata
@@ -39,9 +39,9 @@ RUN apk add --no-cache tini && \
 
 WORKDIR /app
 
-# Copy only agent-related files from builder
+# Copy only node-related files from builder
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/agent ./apps/agent
+COPY --from=builder /app/apps/node ./apps/node
 COPY --from=builder /app/packages/node-api ./packages/node-api
 COPY --from=builder /app/packages/node-services ./packages/node-services
 COPY --from=builder /app/packages/tool-metadata ./packages/tool-metadata
@@ -58,5 +58,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
 # Use tini as entrypoint for proper signal handling
 ENTRYPOINT ["/sbin/tini", "--"]
 
-# Run agent
-CMD ["pnpm", "--filter", "@agistack/agent", "start"]
+# Run node
+CMD ["pnpm", "--filter", "@agistack/node", "start"]

@@ -16,13 +16,13 @@ import env from "./env"
 
 	const db = getDrizzle(databasePath)
 
-	const controlPlane = new ControlPlane(db, CONTROL_PLANE_PORT, env.AGENT_SECRET)
+	const controlPlane = new ControlPlane(db, CONTROL_PLANE_PORT, env.NODE_SECRET)
 
 	await controlPlane.start()
 
 	console.log("Control plane started")
 
-	const agentUrl = `http://localhost:${NODE_PORT}`
+	const nodeUrl = `http://localhost:${NODE_PORT}`
 
 	const client = createTRPCProxyClient<ControlPlaneRouter>({
 		links: [
@@ -34,15 +34,15 @@ import env from "./env"
 	})
 
 	const { nodes } = await client.actions.listNodes.query({})
-	const alreadyExists = nodes.some((n) => n.url === agentUrl)
+	const alreadyExists = nodes.some((n) => n.url === nodeUrl)
 
 	if (!alreadyExists) {
 		const result = await client.actions.addNode.mutate({
 			name: "Local",
-			url: agentUrl,
+			url: nodeUrl,
 		})
-		console.log(`✓ Auto-registered local agent at ${result.node.url}`)
+		console.log(`✓ Auto-registered local node at ${result.node.url}`)
 	} else {
-		console.log("Local agent already registered")
+		console.log("Local node already registered")
 	}
 })()

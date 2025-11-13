@@ -69,7 +69,7 @@ export function AddServerButton() {
   --name agistack-node \\
   -p ${NODE_PORT}:${NODE_PORT} \\
   -v /var/run/docker.sock:/var/run/docker.sock \\
-  -e AGENT_SECRET=${runtimeConfig.agentSecret} \\
+  -e NODE_SECRET=${runtimeConfig.nodeSecret} \\
   ghcr.io/agistack/agistack-node:latest`
 
 	const copyToClipboard = async () => {
