@@ -7,6 +7,14 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism"
 import remarkGfm from "remark-gfm"
 import { Button } from "@/components/ui/button"
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table"
 
 interface MessagePartTextProps {
 	text: string
@@ -118,6 +126,28 @@ export function MessagePartText({ text }: MessagePartTextProps) {
 					},
 					pre({ children }) {
 						return <div className="not-prose">{children}</div>
+					},
+					table({ children }) {
+						return (
+							<div className="not-prose my-4">
+								<Table>{children}</Table>
+							</div>
+						)
+					},
+					thead({ children }) {
+						return <TableHeader>{children}</TableHeader>
+					},
+					tbody({ children }) {
+						return <TableBody>{children}</TableBody>
+					},
+					tr({ children }) {
+						return <TableRow>{children}</TableRow>
+					},
+					th({ children }) {
+						return <TableHead>{children}</TableHead>
+					},
+					td({ children }) {
+						return <TableCell>{children}</TableCell>
 					},
 				}}
 			>
