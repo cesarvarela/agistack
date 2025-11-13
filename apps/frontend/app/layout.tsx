@@ -1,4 +1,3 @@
-import { CONTROL_PLANE_PORT } from "@agistack/control-plane-api/constants"
 import type { Metadata } from "next"
 import env from "../env-server"
 import "./globals.css"
@@ -16,7 +15,7 @@ export default function RootLayout({
 	children: React.ReactNode
 }>) {
 	const runtimeConfig = {
-		controlPlanePort: CONTROL_PLANE_PORT,
+		controlPlanePort: env.CONTROL_PLANE_PORT,
 		agentSecret: env.AGENT_SECRET,
 	}
 

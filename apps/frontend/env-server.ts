@@ -7,6 +7,7 @@ const schema = z.object({
 	OPENROUTER_API_KEY: z.string().min(1),
 	OPENROUTER_MODEL: z.string().min(1),
 	AGENT_SECRET: z.string().min(1),
+	CONTROL_PLANE_PORT: z.coerce.number().default(9898),
 })
 
 // Skip validation during Docker build
