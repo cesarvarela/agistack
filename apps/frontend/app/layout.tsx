@@ -17,6 +17,7 @@ export default function RootLayout({
 	const runtimeConfig = {
 		controlPlanePort: env.CONTROL_PLANE_PORT,
 		nodeSecret: env.NODE_SECRET,
+		nodePort: env.NODE_PORT,
 	}
 
 	return (

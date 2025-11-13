@@ -8,6 +8,7 @@ const schema = z.object({
 	OPENROUTER_MODEL: z.string().min(1),
 	NODE_SECRET: z.string().min(1),
 	CONTROL_PLANE_PORT: z.coerce.number().default(9898),
+	NODE_PORT: z.coerce.number().default(9090),
 })
 
 // Skip validation during Docker build

@@ -1,6 +1,5 @@
 "use client"
 
-import { NODE_PORT } from "@agistack/node-api/constants"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Check, Copy } from "lucide-react"
 import { useState } from "react"
@@ -33,7 +32,7 @@ const addNodeSchema = z.object({
 					return /:\d+/.test(url)
 				}
 			},
-			{ message: `URL must include a port (e.g., http://server:${NODE_PORT})` },
+			{ message: "URL must include a port (e.g., http://server:9090)" },
 		),
 })
 
@@ -67,7 +66,7 @@ export function AddServerButton() {
 
 	const dockerCommand = `docker run -d \\
   --name agistack-node \\
-  -p ${NODE_PORT}:${NODE_PORT} \\
+  -p ${runtimeConfig.nodePort}:${runtimeConfig.nodePort} \\
   -v /var/run/docker.sock:/var/run/docker.sock \\
   -e NODE_SECRET=${runtimeConfig.nodeSecret} \\
   ghcr.io/agistack/agistack-node:latest`
@@ -131,7 +130,7 @@ export function AddServerButton() {
 					</pre>
 					<p className="text-xs text-muted-foreground">
 						Run this command on the server you want to manage. The node will listen on port{" "}
-						{NODE_PORT}.
+						{runtimeConfig.nodePort}.
 					</p>
 				</div>
 
@@ -152,10 +151,10 @@ export function AddServerButton() {
 						<Input
 							id="node-url"
 							{...register("url")}
-							placeholder={`http://node.example.com:${NODE_PORT}`}
+							placeholder={`http://node.example.com:${runtimeConfig.nodePort}`}
 						/>
 						<p className="text-xs text-gray-500 mt-1">
-							Must include port {NODE_PORT} to match the Docker command above
+							Must include port {runtimeConfig.nodePort} to match the Docker command above
 						</p>
 						{errors.url && <p className="text-sm text-red-600 mt-1">{errors.url.message}</p>}
 					</div>

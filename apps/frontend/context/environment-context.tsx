@@ -8,6 +8,7 @@ type EnvId = string | null
 export interface RuntimeConfig {
 	controlPlanePort: number
 	nodeSecret: string
+	nodePort: number
 }
 
 interface EnvironmentContextValue {
