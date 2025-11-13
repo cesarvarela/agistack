@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { Button } from "@/components/ui/button"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { ChatSidebar } from "./chat-sidebar"
+import { Breadcrumbs } from "./breadcrumbs"
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 	const [isChatOpen, setIsChatOpen] = useState(true)
@@ -32,7 +33,10 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 				{/* App Header */}
 				<header className="sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 					<div className="flex items-center justify-between gap-2 px-4 py-3">
-						<SidebarTrigger className="-ml-1" />
+						<div className="flex items-center gap-2">
+							<SidebarTrigger className="-ml-1" />
+							<Breadcrumbs />
+						</div>
 						<Button
 							type="button"
 							variant="ghost"
