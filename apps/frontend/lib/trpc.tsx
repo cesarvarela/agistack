@@ -14,7 +14,14 @@ export const trpc = createTRPCReact<ControlPlaneRouter>()
 export type RouterInputs = inferRouterInputs<ControlPlaneRouter>
 
 function getUrl(port: number) {
-	return `http://localhost:${port}`
+	if (typeof window === "undefined") {
+		// Server-side: use localhost
+		return `http://localhost:${port}`
+	}
+	// Client-side: use current hostname
+	const protocol = window.location.protocol
+	const hostname = window.location.hostname
+	return `${protocol}//${hostname}:${port}`
 }
 
 function getWsUrl(port: number) {

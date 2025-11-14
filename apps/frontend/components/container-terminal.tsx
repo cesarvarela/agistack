@@ -85,7 +85,9 @@ export function ContainerTerminal({ containerId, serverId }: ContainerTerminalPr
 
 		// Get Control Plane port and construct WebSocket URL
 		const cpPort = config.controlPlanePort
-		const cpUrl = `http://localhost:${cpPort}`
+		const protocol = window.location.protocol
+		const hostname = window.location.hostname
+		const cpUrl = `${protocol}//${hostname}:${cpPort}`
 		const wsUrl = cpUrl.replace("http://", "ws://").replace("https://", "wss://")
 
 		// Create WebSocket connection with query parameters
