@@ -37,9 +37,14 @@ RUN cd apps/frontend && DOCKER_BUILD=true pnpm build
 # Production stage
 FROM node:22-alpine
 
-# Install pnpm and PM2
-RUN apk add --no-cache tini && \
-    corepack enable && corepack prepare pnpm@9.0.0 --activate && \
+# Install pnpm, PM2, and required CLI tools
+RUN apk add --no-cache \
+    tini \
+    docker-cli \
+    git \
+    curl \
+    bash \
+    && corepack enable && corepack prepare pnpm@9.0.0 --activate && \
     npm install -g pm2
 
 WORKDIR /app
