@@ -31,13 +31,13 @@
 		"@types/node": "^22.0.0",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.2.6",
-		"tsx": "^4.20.6",
 		"typescript": "^5.9.2"
 	},
 	"packageManager": "pnpm@9.0.0",
 	"dependencies": {
 		"@trpc/client": "^11.7.1",
 		"elysia": "^1.4.13",
-		"node-pty": "^1.0.0"
+		"node-pty": "^1.0.0",
+		"tsx": "^4.20.6"
 	}
 }

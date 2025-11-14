@@ -59,7 +59,6 @@ COPY --from=builder /app/node_modules ./node_modules
 # Clean up unnecessary dependencies and platform binaries
 RUN rm -rf node_modules/.pnpm/@next+swc-linux-arm64-gnu* && \
     rm -rf node_modules/.pnpm/@img+sharp-libvips-linux-arm64@* && \
-    rm -rf node_modules/.pnpm/typescript* && \
     rm -rf /root/.npm /root/.cache
 
 # Create data directory for SQLite database
