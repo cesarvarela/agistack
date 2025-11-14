@@ -190,9 +190,16 @@ export function createPtyExecute<TInput, TOutput>(
 					const result = parseOutput(input, { stdout, stderr, exitCode })
 					resolve(result)
 				} catch (error) {
+					// Truncate stdout if too long (keep first 500 chars)
+					const truncatedOutput = stdout.length > 500 ? `${stdout.slice(0, 500)}... (truncated)` : stdout
+					const commandStr = `${command} ${args.join(" ")}`
+
 					reject(
 						new Error(
-							`Failed to parse output: ${error instanceof Error ? error.message : "Unknown error"}`,
+							`Failed to parse output from command '${commandStr}'\n` +
+							`Exit code: ${exitCode}\n` +
+							`Output: ${truncatedOutput}\n` +
+							`Parse error: ${error instanceof Error ? error.message : "Unknown error"}`,
 						),
 					)
 				}
