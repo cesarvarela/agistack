@@ -9,6 +9,7 @@ import type { ContainerListItem, ContainerPort } from "@agistack/tool-metadata"
 import { useIsMutating } from "@tanstack/react-query"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
+import { ContainerEnv } from "@/components/container-env"
 import { ContainerStats } from "@/components/container-stats"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -265,21 +266,10 @@ export function ContainerDetailClient({ container, serverId }: ContainerDetailCl
 
 				{/* Config Tab */}
 				<TabsContent value="config">
-					<Card>
-						<CardHeader>
-							<CardTitle>Configuration</CardTitle>
-							<CardDescription>Deployment configuration</CardDescription>
-						</CardHeader>
-						<CardContent>
-							{container.deploymentConfig ? (
-								<pre className="text-sm bg-gray-100 dark:bg-gray-900 p-4 rounded overflow-auto">
-									{JSON.stringify(container.deploymentConfig, null, 2)}
-								</pre>
-							) : (
-								<p className="text-sm text-gray-500">No deployment configuration available</p>
-							)}
-						</CardContent>
-					</Card>
+					<ContainerEnv
+						containerId={container.internalId || container.dockerId}
+						serverId={serverId}
+					/>
 				</TabsContent>
 			</Tabs>
 		</div>

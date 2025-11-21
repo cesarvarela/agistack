@@ -66,6 +66,17 @@ export const getContainerLogsMetadata = {
 	}),
 }
 
+export const getContainerEnvMetadata = {
+	name: "container.env" as const,
+	description: "Get runtime environment variables from a running Docker container.",
+	inputSchema: z.object({
+		dockerId: z.string().describe("Docker container ID or name"),
+	}),
+	outputSchema: z.object({
+		env: z.array(z.string()).describe("Array of environment variables in KEY=VALUE format"),
+	}),
+}
+
 export const inspectContainerMetadata = {
 	name: "container.inspect" as const,
 	description: "Inspect a Docker container and return raw Docker inspect JSON.",

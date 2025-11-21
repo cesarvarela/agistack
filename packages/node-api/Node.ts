@@ -2,6 +2,7 @@ import crypto from "node:crypto"
 import type { Server } from "node:http"
 import {
 	execOperation,
+	getContainerEnvOperation,
 	getContainerLogsOperation,
 	inspectContainerOperation,
 	listContainersOperation,
@@ -105,6 +106,11 @@ export class Node {
 					.input(getContainerLogsOperation.metadata.inputSchema)
 					.output(getContainerLogsOperation.metadata.outputSchema)
 					.query(({ input }) => executeHttpOperation(getContainerLogsOperation, input)),
+
+				env: protectedProcedure
+					.input(getContainerEnvOperation.metadata.inputSchema)
+					.output(getContainerEnvOperation.metadata.outputSchema)
+					.query(({ input }) => executeHttpOperation(getContainerEnvOperation, input)),
 
 				start: protectedProcedure
 					.input(startContainerOperation.metadata.inputSchema)

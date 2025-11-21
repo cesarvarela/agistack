@@ -1,3 +1,4 @@
+export { getContainerEnvOperation } from "./getContainerEnv"
 export { getContainerLogsOperation } from "./getContainerLogs"
 export { inspectContainerOperation } from "./inspectContainer"
 export { restartContainerOperation } from "./restartContainer"

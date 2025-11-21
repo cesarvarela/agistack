@@ -14,6 +14,7 @@ import {
 import type { DatabaseClient } from "@agistack/db"
 import { createTRPCServerWithWebSocket } from "@agistack/node-api"
 import {
+	getContainerEnvOperation,
 	getContainerLogsOperation,
 	inspectContainerOperation,
 	listContainersOperation,
@@ -188,6 +189,20 @@ export class ControlPlane {
 							const { nodeId, ...nodeInput } = input
 							const nodeClient = this.nodeRegistry.getClient(nodeId)
 							return await nodeClient.client.container.logs.query(nodeInput)
+						}),
+
+					env: t.procedure
+						.input(
+							z.intersection(
+								getContainerEnvOperation.metadata.inputSchema,
+								z.object({ nodeId: z.string() }),
+							),
+						)
+						.output(getContainerEnvOperation.metadata.outputSchema)
+						.query(async ({ input }) => {
+							const { nodeId, ...nodeInput } = input
+							const nodeClient = this.nodeRegistry.getClient(nodeId)
+							return await nodeClient.client.container.env.query(nodeInput)
 						}),
 
 					start: t.procedure
